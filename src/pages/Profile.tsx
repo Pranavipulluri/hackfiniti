@@ -1,7 +1,7 @@
 
 import { useState } from "react";
 import { motion } from "framer-motion";
-import { Trophy, Award, Heart, Star, Map, Flag, Edit, Camera } from "lucide-react";
+import { Trophy, Award, Heart, Star, Map, Flag, Edit, Camera, ShoppingBag } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
