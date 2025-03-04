@@ -14,6 +14,7 @@ import Marketplace from "./pages/Marketplace";
 import Chat from "./pages/Chat";
 import Exploration from "./pages/Exploration";
 import MiniGames from "./pages/MiniGames";
+import WelcomePage from "./pages/WelcomePage";
 
 const queryClient = new QueryClient();
 
@@ -28,6 +29,7 @@ const App = () => (
             <Route path="/" element={<Index />} />
             <Route path="/about" element={<About />} />
             <Route path="/create-character" element={<CreateCharacter />} />
+            <Route path="/welcome" element={<WelcomePage />} />
             <Route path="/profile" element={<Profile />} />
             <Route path="/marketplace" element={<Marketplace />} />
             <Route path="/chat" element={<Chat />} />
