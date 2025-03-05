@@ -71,12 +71,10 @@ export function ChatProvider({ children }: { children: React.ReactNode }) {
     const fetchContacts = async () => {
       setLoadingContacts(true);
       try {
+        // First get the contact IDs
         const { data, error } = await supabase
           .from('contacts')
-          .select(`
-            *,
-            profile:profiles!contacts_contact_id_fkey(username, avatar)
-          `)
+          .select('*')
           .eq('user_id', user.id)
           .eq('status', 'accepted');
 
@@ -85,7 +83,29 @@ export function ChatProvider({ children }: { children: React.ReactNode }) {
           return;
         }
 
-        setContacts(data as Contact[]);
+        // Then fetch the profiles for those contacts
+        const contactsList = [...data] as Contact[];
+        
+        for (let i = 0; i < contactsList.length; i++) {
+          const contact = contactsList[i];
+          const { data: profileData, error: profileError } = await supabase
+            .from('profiles')
+            .select('username, avatar')
+            .eq('id', contact.contact_id)
+            .single();
+            
+          if (!profileError && profileData) {
+            contactsList[i] = { 
+              ...contact, 
+              profile: {
+                username: profileData.username || 'Unknown',
+                avatar: profileData.avatar || '/placeholder.svg'
+              }
+            };
+          }
+        }
+        
+        setContacts(contactsList);
       } catch (error) {
         console.error('Error in contacts fetch:', error);
       } finally {
