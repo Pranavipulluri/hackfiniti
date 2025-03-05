@@ -2,18 +2,34 @@
 import { motion } from "framer-motion";
 import { Globe, Users, ShoppingBag, GraduationCap, Gamepad, MessageCircle } from "lucide-react";
 import { Link } from "react-router-dom";
-import { Button } from "@/components/ui/button";
+import { useEffect } from "react";
 import { Card } from "@/components/ui/card";
 import WorldGlobe from "@/components/WorldGlobe";
 import NavigationBar from "@/components/NavigationBar";
+import AnimatedCharacter from "@/components/AnimatedCharacter";
+import SoundToggle from "@/components/SoundToggle";
+import SoundButton from "@/components/SoundButton";
+import { soundManager } from "@/utils/soundUtils";
 
 const Index = () => {
+  useEffect(() => {
+    // Preload our sounds when the component mounts
+    soundManager.preloadSound('click', '/sounds/click.mp3');
+    soundManager.preloadSound('hover', '/sounds/hover.mp3');
+    soundManager.preloadBgMusic('/sounds/background-music.mp3');
+  }, []);
+
   return (
-    <div className="min-h-screen bg-gradient-to-b from-background to-teal-50">
+    <div className="min-h-screen bg-gradient-to-b from-background to-teal-50 overflow-x-hidden">
       <NavigationBar />
+      <SoundToggle />
       
       {/* Hero Section */}
-      <section className="container mx-auto px-4 pt-24 pb-32">
+      <section className="container mx-auto px-4 pt-24 pb-32 relative">
+        {/* Animated Characters */}
+        <AnimatedCharacter characterType="explorer" position="right" delay={500} />
+        <AnimatedCharacter characterType="guide" position="left" delay={800} />
+        
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -28,12 +44,12 @@ const Index = () => {
             immersive multiplayer experience.
           </p>
           <div className="flex flex-wrap justify-center gap-4">
-            <Button asChild size="lg" className="bg-teal-500 hover:bg-teal-600">
+            <SoundButton asChild size="lg" className="bg-teal-500 hover:bg-teal-600">
               <Link to="/create-character">Start Your Journey</Link>
-            </Button>
-            <Button asChild variant="outline" size="lg">
+            </SoundButton>
+            <SoundButton asChild variant="outline" size="lg">
               <Link to="/about">Learn More</Link>
-            </Button>
+            </SoundButton>
           </div>
         </motion.div>
 
@@ -49,7 +65,10 @@ const Index = () => {
       </section>
 
       {/* Features Section */}
-      <section className="container mx-auto px-4 py-20 bg-white rounded-t-[3rem] shadow-lg">
+      <section className="container mx-auto px-4 py-20 bg-white rounded-t-[3rem] shadow-lg relative">
+        {/* Merchant character in features section */}
+        <AnimatedCharacter characterType="merchant" position="right" delay={1200} />
+        
         <h2 className="font-playfair text-4xl font-bold text-center mb-16">
           Embark on a Cultural Adventure
         </h2>
@@ -97,9 +116,9 @@ const Index = () => {
         
         <div className="mt-16 text-center">
           <h3 className="font-playfair text-2xl font-semibold mb-4">Ready to Begin Your Cultural Journey?</h3>
-          <Button asChild size="lg" className="bg-teal-500 hover:bg-teal-600">
+          <SoundButton asChild size="lg" className="bg-teal-500 hover:bg-teal-600">
             <Link to="/create-character">Create Your Character</Link>
-          </Button>
+          </SoundButton>
         </div>
       </section>
     </div>
@@ -132,9 +151,9 @@ const Feature = ({
         <p className="font-inter text-gray-600 mb-6">{description}</p>
       </div>
       <div className="mt-auto pt-4 text-center">
-        <Button asChild variant="outline" className="group-hover:bg-teal-50 transition-colors">
+        <SoundButton asChild variant="outline" className="group-hover:bg-teal-50 transition-colors">
           <Link to={link}>{linkText}</Link>
-        </Button>
+        </SoundButton>
       </div>
     </Card>
   </motion.div>
