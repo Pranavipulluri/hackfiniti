@@ -1,8 +1,10 @@
+
 import { useState } from "react";
 import { motion } from "framer-motion";
 import { 
   Gamepad, Trophy, Star, Clock, Utensils, Speech, 
-  Music, PenTool, Sparkles, Zap, Crown, ChefHat
+  Music, PenTool, Sparkles, Zap, Crown, ChefHat,
+  Globe, Palette
 } from "lucide-react";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
