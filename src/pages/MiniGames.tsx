@@ -11,13 +11,15 @@ import { Progress } from "@/components/ui/progress";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import PageLayout from "@/components/PageLayout";
 import CookingChallenge from "@/components/games/CookingChallenge";
+import LanguageChallenge from "@/components/games/LanguageChallenge";
+import ArtStudio from "@/components/games/ArtStudio";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { soundManager } from "@/utils/soundUtils";
 
 const MiniGames = () => {
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [activeGame, setActiveGame] = useState<string | null>(null);
   
-  // Mock data
   const categories = [
     { id: "all", label: "All Games", icon: <Gamepad className="h-5 w-5" /> },
     { id: "cooking", label: "Cooking", icon: <Utensils className="h-5 w-5" /> },
@@ -116,6 +118,17 @@ const MiniGames = () => {
     }
   };
 
+  const handleGameClick = (gameCategory: string) => {
+    soundManager.playSound("click");
+    if (gameCategory === "cooking") {
+      setActiveGame("cooking-challenge");
+    } else if (gameCategory === "language") {
+      setActiveGame("language-challenge");
+    } else if (gameCategory === "art") {
+      setActiveGame("art-studio");
+    }
+  };
+
   const renderGamesList = () => (
     <div className="max-w-6xl mx-auto">
       <div className="flex flex-col md:flex-row justify-between items-center mb-8">
@@ -162,11 +175,7 @@ const MiniGames = () => {
                       <Button 
                         size="sm" 
                         className="bg-teal-500 hover:bg-teal-600"
-                        onClick={() => {
-                          if (game.category === "cooking") {
-                            setActiveGame("cooking-challenge");
-                          }
-                        }}
+                        onClick={() => handleGameClick(game.category)}
                       >
                         Play Now
                       </Button>
@@ -186,7 +195,14 @@ const MiniGames = () => {
             <ChefHat className="h-4 w-4" />
             Cooking Challenges
           </TabsTrigger>
-          <TabsTrigger value="language">Language Games</TabsTrigger>
+          <TabsTrigger value="language" className="flex items-center gap-2">
+            <Speech className="h-4 w-4" />
+            Language Games
+          </TabsTrigger>
+          <TabsTrigger value="art" className="flex items-center gap-2">
+            <PenTool className="h-4 w-4" />
+            Art Studio
+          </TabsTrigger>
         </TabsList>
         
         <TabsContent value="games">
@@ -276,11 +292,7 @@ const MiniGames = () => {
                     <Button 
                       size="sm" 
                       className="bg-teal-500 hover:bg-teal-600"
-                      onClick={() => {
-                        if (game.category === "cooking") {
-                          setActiveGame("cooking-challenge");
-                        }
-                      }}
+                      onClick={() => handleGameClick(game.category)}
                     >
                       Play
                     </Button>
@@ -344,9 +356,106 @@ const MiniGames = () => {
         </TabsContent>
         
         <TabsContent value="language">
-          <div className="text-center p-8">
-            <h2 className="text-2xl font-bold mb-2">Language Games</h2>
-            <p className="text-gray-600">Coming soon! Check back for language learning mini-games.</p>
+          <div className="text-center mb-8">
+            <h2 className="text-2xl font-bold mb-2 flex items-center justify-center gap-2">
+              <Speech className="h-6 w-6 text-blue-500" />
+              Language Games
+            </h2>
+            <p className="text-gray-600 max-w-2xl mx-auto">
+              Learn common phrases from different cultures and expand your language skills through interactive challenges.
+            </p>
+            
+            <div className="mt-4">
+              <Button 
+                size="lg" 
+                className="bg-blue-500 hover:bg-blue-600"
+                onClick={() => setActiveGame("language-challenge")}
+              >
+                <Globe className="mr-2 h-5 w-5" />
+                Start Language Challenge
+              </Button>
+            </div>
+          </div>
+          
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            {games.filter(game => game.category === "language").map(game => (
+              <Card key={game.id} className="overflow-hidden">
+                <div className="h-32 relative">
+                  <img src={game.image} alt={game.title} className="w-full h-full object-cover" />
+                  <Badge 
+                    className={`absolute top-2 right-2 ${getDifficultyColor(game.difficulty)}`}
+                  >
+                    {game.difficulty}
+                  </Badge>
+                </div>
+                
+                <CardContent className="p-4">
+                  <h3 className="font-bold text-lg mb-1">{game.title}</h3>
+                  <p className="text-sm text-gray-600 mb-3 line-clamp-2">{game.description}</p>
+                </CardContent>
+                
+                <CardFooter className="p-4 pt-0">
+                  <Button 
+                    className="w-full bg-blue-500 hover:bg-blue-600"
+                    onClick={() => setActiveGame("language-challenge")}
+                  >
+                    Play
+                  </Button>
+                </CardFooter>
+              </Card>
+            ))}
+          </div>
+        </TabsContent>
+        
+        <TabsContent value="art">
+          <div className="text-center mb-8">
+            <h2 className="text-2xl font-bold mb-2 flex items-center justify-center gap-2">
+              <PenTool className="h-6 w-6 text-purple-500" />
+              Art Studio
+            </h2>
+            <p className="text-gray-600 max-w-2xl mx-auto">
+              Create traditional art pieces using authentic techniques from different cultures around the world.
+            </p>
+            
+            <div className="mt-4">
+              <Button 
+                size="lg" 
+                className="bg-purple-500 hover:bg-purple-600"
+                onClick={() => setActiveGame("art-studio")}
+              >
+                <Palette className="mr-2 h-5 w-5" />
+                Start Art Challenge
+              </Button>
+            </div>
+          </div>
+          
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            {games.filter(game => game.category === "art").map(game => (
+              <Card key={game.id} className="overflow-hidden">
+                <div className="h-32 relative">
+                  <img src={game.image} alt={game.title} className="w-full h-full object-cover" />
+                  <Badge 
+                    className={`absolute top-2 right-2 ${getDifficultyColor(game.difficulty)}`}
+                  >
+                    {game.difficulty}
+                  </Badge>
+                </div>
+                
+                <CardContent className="p-4">
+                  <h3 className="font-bold text-lg mb-1">{game.title}</h3>
+                  <p className="text-sm text-gray-600 mb-3 line-clamp-2">{game.description}</p>
+                </CardContent>
+                
+                <CardFooter className="p-4 pt-0">
+                  <Button 
+                    className="w-full bg-purple-500 hover:bg-purple-600"
+                    onClick={() => setActiveGame("art-studio")}
+                  >
+                    Play
+                  </Button>
+                </CardFooter>
+              </Card>
+            ))}
           </div>
         </TabsContent>
       </Tabs>
@@ -516,6 +625,28 @@ const MiniGames = () => {
             Back to Games
           </Button>
           <CookingChallenge />
+        </div>
+      ) : activeGame === "language-challenge" ? (
+        <div className="mx-auto max-w-6xl">
+          <Button 
+            variant="outline" 
+            className="mb-4"
+            onClick={() => setActiveGame(null)}
+          >
+            Back to Games
+          </Button>
+          <LanguageChallenge />
+        </div>
+      ) : activeGame === "art-studio" ? (
+        <div className="mx-auto max-w-6xl">
+          <Button 
+            variant="outline" 
+            className="mb-4"
+            onClick={() => setActiveGame(null)}
+          >
+            Back to Games
+          </Button>
+          <ArtStudio />
         </div>
       ) : (
         renderGamesList()
