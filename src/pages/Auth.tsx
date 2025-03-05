@@ -13,9 +13,8 @@ import { Toaster } from '@/components/ui/toaster';
 const Auth = () => {
   const { signIn, signUp, user, loading } = useAuth();
   const navigate = useNavigate();
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
   const [username, setUsername] = useState('');
+  const [password, setPassword] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   // If user is already logged in, redirect to home
@@ -27,11 +26,11 @@ const Auth = () => {
 
   const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!email || !password) return;
+    if (!username || !password) return;
     
     try {
       setIsSubmitting(true);
-      await signIn(email, password);
+      await signIn(username, password);
       navigate('/');
     } catch (error) {
       console.error('Sign in error:', error);
@@ -42,11 +41,11 @@ const Auth = () => {
 
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!email || !password || !username) return;
+    if (!username || !password) return;
     
     try {
       setIsSubmitting(true);
-      await signUp(email, password, username);
+      await signUp(username, password);
       // Redirect will happen automatically via the useEffect when user is set
     } catch (error) {
       console.error('Sign up error:', error);
@@ -79,13 +78,13 @@ const Auth = () => {
             <TabsContent value="login">
               <form onSubmit={handleSignIn} className="space-y-4">
                 <div className="space-y-2">
-                  <Label htmlFor="email">Email</Label>
+                  <Label htmlFor="username">Username</Label>
                   <Input 
-                    id="email" 
-                    type="email" 
-                    placeholder="your@email.com" 
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
+                    id="username" 
+                    type="text" 
+                    placeholder="your_username" 
+                    value={username}
+                    onChange={(e) => setUsername(e.target.value)}
                     required
                   />
                 </div>
@@ -113,24 +112,13 @@ const Auth = () => {
             <TabsContent value="register">
               <form onSubmit={handleSignUp} className="space-y-4">
                 <div className="space-y-2">
-                  <Label htmlFor="username">Username</Label>
+                  <Label htmlFor="reg-username">Username</Label>
                   <Input 
-                    id="username" 
+                    id="reg-username" 
                     type="text" 
-                    placeholder="coolexplorer" 
+                    placeholder="your_username" 
                     value={username}
                     onChange={(e) => setUsername(e.target.value)}
-                    required
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="reg-email">Email</Label>
-                  <Input 
-                    id="reg-email" 
-                    type="email" 
-                    placeholder="your@email.com" 
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
                     required
                   />
                 </div>

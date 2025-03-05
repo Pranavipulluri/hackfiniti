@@ -8,8 +8,8 @@ type AuthContextProps = {
   session: Session | null;
   user: User | null;
   loading: boolean;
-  signIn: (email: string, password: string) => Promise<void>;
-  signUp: (email: string, password: string, username: string) => Promise<void>;
+  signIn: (username: string, password: string) => Promise<void>;
+  signUp: (username: string, password: string) => Promise<void>;
   signOut: () => Promise<void>;
 };
 
@@ -52,10 +52,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     };
   }, []);
 
-  const signIn = async (email: string, password: string) => {
+  const signIn = async (username: string, password: string) => {
     try {
       setLoading(true);
-      const { error } = await supabase.auth.signInWithPassword({ email, password });
+      // Generate email from username for Supabase auth
+      const email = `${username}@culturalquest.com`;
+      
+      const { error } = await supabase.auth.signInWithPassword({ 
+        email, 
+        password 
+      });
       
       if (error) {
         toast({
@@ -78,9 +84,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
-  const signUp = async (email: string, password: string, username: string) => {
+  const signUp = async (username: string, password: string) => {
     try {
       setLoading(true);
+      // Generate email from username for Supabase auth
+      const email = `${username}@culturalquest.com`;
+      
       const { error } = await supabase.auth.signUp({ 
         email, 
         password,
@@ -99,6 +108,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         });
         throw error;
       }
+      
+      // After signup, immediately sign in
+      await signIn(username, password);
       
       toast({
         title: "Account created",
