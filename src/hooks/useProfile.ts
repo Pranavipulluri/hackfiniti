@@ -51,6 +51,21 @@ export function useProfile() {
     };
     
     fetchProfile();
+    
+    // Set up a realtime subscription to profile changes
+    const channel = supabase
+      .channel('profile-changes')
+      .on('postgres_changes', 
+        { event: 'UPDATE', schema: 'public', table: 'profiles', filter: `id=eq.${user.id}` }, 
+        (payload) => {
+          setProfile(payload.new as Profile);
+        }
+      )
+      .subscribe();
+      
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, [user]);
   
   const updateProfile = async (updates: Partial<Profile>) => {
@@ -71,8 +86,7 @@ export function useProfile() {
         throw error;
       }
       
-      setProfile(prev => prev ? { ...prev, ...updates } : null);
-      
+      // No need to update local state as the realtime subscription will handle it
       toast({
         title: "Profile updated",
         description: "Your profile has been updated successfully.",
