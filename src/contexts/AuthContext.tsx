@@ -55,8 +55,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const signIn = async (username: string, password: string) => {
     try {
       setLoading(true);
-      // Generate email from username for Supabase auth
-      const email = `${username}@culturalquest.com`;
+      // Generate valid email from username for Supabase auth
+      const email = `${username}@example.com`;
       
       const { error } = await supabase.auth.signInWithPassword({ 
         email, 
@@ -87,8 +87,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const signUp = async (username: string, password: string) => {
     try {
       setLoading(true);
-      // Generate email from username for Supabase auth
-      const email = `${username}@culturalquest.com`;
+      // Generate valid email from username for Supabase auth
+      const email = `${username}@example.com`;
       
       // First, create the user account with signUp
       const { data, error } = await supabase.auth.signUp({ 
