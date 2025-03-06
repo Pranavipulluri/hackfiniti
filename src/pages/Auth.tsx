@@ -31,7 +31,7 @@ const Auth = () => {
     try {
       setIsSubmitting(true);
       await signIn(username, password);
-      navigate('/');
+      // Redirection will be handled by the useEffect above
     } catch (error) {
       console.error('Sign in error:', error);
     } finally {
@@ -46,7 +46,8 @@ const Auth = () => {
     try {
       setIsSubmitting(true);
       await signUp(username, password);
-      // No need to redirect manually, the signUp function will sign in automatically
+      // The signUp function now handles the sign in automatically
+      // Redirection will be handled by the useEffect above
     } catch (error) {
       console.error('Sign up error:', error);
     } finally {

@@ -90,6 +90,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       // Generate email from username for Supabase auth
       const email = `${username}@culturalquest.com`;
       
+      // First, create the user account with signUp
       const { data, error } = await supabase.auth.signUp({ 
         email, 
         password,
@@ -97,7 +98,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           data: {
             username,
           },
-          // Set emailRedirectTo to null to disable email verification
+          // Disable email verification
           emailRedirectTo: null,
         },
       });
@@ -111,15 +112,27 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         throw error;
       }
       
-      // Check if user was created successfully
+      // After user creation, we don't wait for email verification
+      // Instead, directly sign in the user
       if (data && data.user) {
-        // Skip the email verification and immediately sign in
-        await signIn(username, password);
-        
-        toast({
-          title: "Account created",
-          description: "Welcome to CulturalQuest! Your account has been created.",
-        });
+        // Instead of waiting for email verification, sign in directly
+        try {
+          // We sign in directly, bypassing email verification
+          await supabase.auth.signInWithPassword({ email, password });
+          
+          toast({
+            title: "Account created",
+            description: "Welcome to CulturalQuest! Your account has been created.",
+          });
+        } catch (signInError) {
+          console.error('Error auto-signing in after registration:', signInError);
+          toast({
+            title: "Sign in error after registration",
+            description: "Your account was created but we couldn't sign you in automatically. Please try signing in manually.",
+            variant: "destructive",
+          });
+          throw signInError;
+        }
       }
     } catch (error) {
       console.error('Error signing up:', error);
