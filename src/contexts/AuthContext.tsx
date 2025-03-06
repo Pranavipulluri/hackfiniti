@@ -1,3 +1,4 @@
+
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { Session, User } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
@@ -52,10 +53,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const signIn = async (username: string, password: string) => {
     try {
       setLoading(true);
-      const email = `${username}@gmail.com`;
       
+      // Use username directly as the email to simplify authentication
       const { error } = await supabase.auth.signInWithPassword({ 
-        email, 
+        email: username, 
         password 
       });
       
@@ -83,16 +84,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const signUp = async (username: string, password: string) => {
     try {
       setLoading(true);
-      const email = `${username}@gmail.com`;
       
+      // Use username directly as the email
       const { data, error } = await supabase.auth.signUp({ 
-        email, 
+        email: username, 
         password,
         options: {
           data: {
             username,
           },
-          emailRedirectTo: null,
         },
       });
       
@@ -107,7 +107,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       
       if (data && data.user) {
         try {
-          await supabase.auth.signInWithPassword({ email, password });
+          // After signup, immediately sign in
+          await supabase.auth.signInWithPassword({ 
+            email: username, 
+            password 
+          });
           
           toast({
             title: "Account created",

@@ -9,6 +9,8 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Toaster } from '@/components/ui/toaster';
+import { AlertCircle } from 'lucide-react';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 
 const Auth = () => {
   const { signIn, signUp, user, loading } = useAuth();
@@ -16,6 +18,7 @@ const Auth = () => {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   // If user is already logged in, redirect to home
   useEffect(() => {
@@ -24,16 +27,23 @@ const Auth = () => {
     }
   }, [user, loading, navigate]);
 
+  const clearError = () => setError(null);
+
   const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!username || !password) return;
+    if (!username || !password) {
+      setError('Please enter both username and password');
+      return;
+    }
     
+    clearError();
     try {
       setIsSubmitting(true);
       await signIn(username, password);
       // Redirection will be handled by the useEffect above
     } catch (error) {
       console.error('Sign in error:', error);
+      setError('Failed to sign in. Please check your credentials.');
     } finally {
       setIsSubmitting(false);
     }
@@ -41,8 +51,12 @@ const Auth = () => {
 
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!username || !password) return;
+    if (!username || !password) {
+      setError('Please enter both username and password');
+      return;
+    }
     
+    clearError();
     try {
       setIsSubmitting(true);
       await signUp(username, password);
@@ -50,6 +64,7 @@ const Auth = () => {
       // Redirection will be handled by the useEffect above
     } catch (error) {
       console.error('Sign up error:', error);
+      setError('Failed to create account. Username may already be taken.');
     } finally {
       setIsSubmitting(false);
     }
@@ -70,6 +85,13 @@ const Auth = () => {
           </CardDescription>
         </CardHeader>
         <CardContent className="p-6">
+          {error && (
+            <Alert variant="destructive" className="mb-4">
+              <AlertCircle className="h-4 w-4" />
+              <AlertDescription>{error}</AlertDescription>
+            </Alert>
+          )}
+          
           <Tabs defaultValue="login" className="w-full">
             <TabsList className="grid w-full grid-cols-2">
               <TabsTrigger value="login">Login</TabsTrigger>
@@ -87,6 +109,7 @@ const Auth = () => {
                     value={username}
                     onChange={(e) => setUsername(e.target.value)}
                     required
+                    onClick={clearError}
                   />
                 </div>
                 <div className="space-y-2">
@@ -98,6 +121,7 @@ const Auth = () => {
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     required
+                    onClick={clearError}
                   />
                 </div>
                 <Button 
@@ -121,6 +145,7 @@ const Auth = () => {
                     value={username}
                     onChange={(e) => setUsername(e.target.value)}
                     required
+                    onClick={clearError}
                   />
                 </div>
                 <div className="space-y-2">
@@ -132,6 +157,7 @@ const Auth = () => {
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     required
+                    onClick={clearError}
                   />
                 </div>
                 <Button 
