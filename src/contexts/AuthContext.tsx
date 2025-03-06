@@ -1,4 +1,3 @@
-
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { Session, User } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
@@ -22,7 +21,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const { toast } = useToast();
 
   useEffect(() => {
-    // Get initial session
     const getInitialSession = async () => {
       setLoading(true);
       const { data: { session }, error } = await supabase.auth.getSession();
@@ -38,7 +36,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     getInitialSession();
 
-    // Listen for auth changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (_event, session) => {
         setSession(session);
@@ -55,8 +52,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const signIn = async (username: string, password: string) => {
     try {
       setLoading(true);
-      // Generate valid email from username for Supabase auth
-      const email = `${username}@example.com`;
+      const email = `${username}@gmail.com`;
       
       const { error } = await supabase.auth.signInWithPassword({ 
         email, 
@@ -87,10 +83,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const signUp = async (username: string, password: string) => {
     try {
       setLoading(true);
-      // Generate valid email from username for Supabase auth
-      const email = `${username}@example.com`;
+      const email = `${username}@gmail.com`;
       
-      // First, create the user account with signUp
       const { data, error } = await supabase.auth.signUp({ 
         email, 
         password,
@@ -98,7 +92,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           data: {
             username,
           },
-          // Disable email verification
           emailRedirectTo: null,
         },
       });
@@ -112,12 +105,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         throw error;
       }
       
-      // After user creation, we don't wait for email verification
-      // Instead, directly sign in the user
       if (data && data.user) {
-        // Instead of waiting for email verification, sign in directly
         try {
-          // We sign in directly, bypassing email verification
           await supabase.auth.signInWithPassword({ email, password });
           
           toast({
