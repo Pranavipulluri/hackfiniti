@@ -46,7 +46,7 @@ const Auth = () => {
     try {
       setIsSubmitting(true);
       await signUp(username, password);
-      // Redirect will happen automatically via the useEffect when user is set
+      // No need to redirect manually, the signUp function will sign in automatically
     } catch (error) {
       console.error('Sign up error:', error);
     } finally {

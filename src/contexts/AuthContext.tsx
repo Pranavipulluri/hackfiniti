@@ -90,13 +90,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       // Generate email from username for Supabase auth
       const email = `${username}@culturalquest.com`;
       
-      const { error } = await supabase.auth.signUp({ 
+      const { data, error } = await supabase.auth.signUp({ 
         email, 
         password,
         options: {
           data: {
             username,
           },
+          // Set emailRedirectTo to null to disable email verification
+          emailRedirectTo: null,
         },
       });
       
@@ -109,13 +111,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         throw error;
       }
       
-      // After signup, immediately sign in
-      await signIn(username, password);
-      
-      toast({
-        title: "Account created",
-        description: "Welcome to CulturalQuest! Your account has been created.",
-      });
+      // Check if user was created successfully
+      if (data && data.user) {
+        // Skip the email verification and immediately sign in
+        await signIn(username, password);
+        
+        toast({
+          title: "Account created",
+          description: "Welcome to CulturalQuest! Your account has been created.",
+        });
+      }
     } catch (error) {
       console.error('Error signing up:', error);
       throw error;
