@@ -33,6 +33,43 @@ type Recipe = {
 // Mock data for our recipes
 const mockRecipes: Recipe[] = [
   {
+    id: "kerala-sadya",
+    name: "Kerala Sadya (Traditional Feast)",
+    country: "India (Kerala)",
+    description: "Create an authentic Kerala Sadya, a traditional vegetarian feast served on banana leaves during festivals like Onam.",
+    timeLimit: 240, // 4 minutes
+    difficulty: "Hard",
+    pointsValue: 250,
+    ingredients: [
+      { id: "rice", name: "Rice", image: "/placeholder.svg", isCorrect: true },
+      { id: "coconut", name: "Coconut", image: "/placeholder.svg", isCorrect: true },
+      { id: "banana-leaf", name: "Banana Leaf", image: "/placeholder.svg", isCorrect: true },
+      { id: "curry-leaves", name: "Curry Leaves", image: "/placeholder.svg", isCorrect: true },
+      { id: "green-chili", name: "Green Chillies", image: "/placeholder.svg", isCorrect: true },
+      { id: "turmeric", name: "Turmeric", image: "/placeholder.svg", isCorrect: true },
+      { id: "mustard-seeds", name: "Mustard Seeds", image: "/placeholder.svg", isCorrect: true },
+      { id: "yogurt", name: "Yogurt", image: "/placeholder.svg", isCorrect: true },
+      { id: "jaggery", name: "Jaggery", image: "/placeholder.svg", isCorrect: true },
+      { id: "ginger", name: "Ginger", image: "/placeholder.svg", isCorrect: true },
+      { id: "lentils", name: "Lentils", image: "/placeholder.svg", isCorrect: true },
+      { id: "vegetables", name: "Mixed Vegetables", image: "/placeholder.svg", isCorrect: true },
+      { id: "tomato", name: "Tomato", image: "/placeholder.svg", isCorrect: false },
+      { id: "cheese", name: "Cheese", image: "/placeholder.svg", isCorrect: false },
+      { id: "pasta", name: "Pasta", image: "/placeholder.svg", isCorrect: false },
+    ],
+    steps: [
+      "Arrange banana leaf and wash it properly",
+      "Prepare rice (the centerpiece of Sadya)",
+      "Cook sambar (lentil and vegetable stew)",
+      "Prepare avial (mixed vegetables with coconut)",
+      "Make thoran (stir-fried vegetables with coconut)",
+      "Cook olan (white gourd and coconut curry)",
+      "Prepare pachadi (yogurt-based side dish)",
+      "Make payasam (sweet dessert) with jaggery",
+      "Arrange all dishes on the banana leaf in the traditional order"
+    ]
+  },
+  {
     id: "sushi-roll",
     name: "California Sushi Roll",
     country: "Japan",
