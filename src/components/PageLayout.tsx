@@ -2,6 +2,7 @@
 import { motion } from "framer-motion";
 import NavigationBar from "./NavigationBar";
 import { ReactNode } from "react";
+import { Sparkles } from "lucide-react";
 
 type PageLayoutProps = {
   children: ReactNode;
@@ -10,9 +11,38 @@ type PageLayoutProps = {
 
 const PageLayout = ({ children, fullWidth = false }: PageLayoutProps) => {
   return (
-    <div className="min-h-screen bg-gradient-to-b from-background to-teal-50">
+    <div className="min-h-screen bg-[url('/lovable-uploads/c33d1835-34b1-4ffe-9332-68c37b3b2c00.png')] bg-cover bg-fixed">
+      <div className="absolute inset-0 bg-gradient-to-b from-slate-900/80 to-slate-800/90 backdrop-blur-sm"></div>
       <NavigationBar />
-      <main className="pt-16">
+      
+      {/* Decorative sparkles */}
+      <div className="fixed inset-0 overflow-hidden pointer-events-none">
+        {[...Array(15)].map((_, i) => (
+          <motion.div
+            key={i}
+            className="absolute text-yellow-300/30"
+            initial={{ 
+              x: Math.random() * window.innerWidth, 
+              y: Math.random() * window.innerHeight,
+              opacity: 0,
+              scale: 0
+            }}
+            animate={{ 
+              opacity: [0, 1, 0],
+              scale: [0, 1, 0],
+            }}
+            transition={{
+              duration: 2 + Math.random() * 3,
+              repeat: Infinity,
+              delay: Math.random() * 5,
+            }}
+          >
+            <Sparkles size={8 + Math.random() * 8} />
+          </motion.div>
+        ))}
+      </div>
+      
+      <main className="pt-16 relative z-10">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}

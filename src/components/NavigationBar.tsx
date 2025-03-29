@@ -1,7 +1,7 @@
 
 import { Link, useLocation } from "react-router-dom";
 import { motion } from "framer-motion";
-import { Home, User, ShoppingBag, MessageCircle, Globe, Gamepad, Info } from "lucide-react";
+import { Home, User, ShoppingBag, MessageCircle, Globe, Gamepad, Info, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
@@ -19,11 +19,12 @@ const NavigationBar = () => {
   ];
 
   return (
-    <nav className="fixed top-0 left-0 right-0 z-10 bg-white/95 backdrop-blur-sm shadow-sm">
+    <nav className="fixed top-0 left-0 right-0 z-50 bg-slate-900/80 backdrop-blur-lg shadow-lg border-b border-orange-500/30">
       <div className="container mx-auto px-4">
         <div className="flex items-center justify-between h-16">
           <Link to="/" className="flex items-center gap-2">
-            <span className="font-playfair font-bold text-xl text-teal-600">Cultural Quest</span>
+            <Sparkles className="w-6 h-6 text-orange-400" />
+            <span className="font-playfair font-bold text-xl text-transparent bg-clip-text bg-gradient-to-r from-orange-400 to-yellow-300">Cultural Quest</span>
           </Link>
           
           <div className="hidden md:flex space-x-1">
@@ -36,7 +37,9 @@ const NavigationBar = () => {
                   variant={isActive ? "default" : "ghost"}
                   className={cn(
                     "relative",
-                    isActive && "bg-teal-500 hover:bg-teal-600"
+                    isActive 
+                      ? "bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white" 
+                      : "hover:bg-slate-800 text-slate-300 hover:text-white"
                   )}
                 >
                   <Link to={item.path}>
@@ -45,7 +48,7 @@ const NavigationBar = () => {
                     {isActive && (
                       <motion.div
                         layoutId="navbar-indicator"
-                        className="absolute bottom-0 left-0 right-0 h-0.5 bg-teal-500"
+                        className="absolute bottom-0 left-0 right-0 h-0.5 bg-yellow-300"
                         initial={{ opacity: 0 }}
                         animate={{ opacity: 1 }}
                         transition={{ duration: 0.2 }}
@@ -58,7 +61,11 @@ const NavigationBar = () => {
           </div>
           
           <div className="md:hidden flex items-center">
-            <Button variant="outline" size="icon">
+            <Button 
+              variant="outline" 
+              size="icon"
+              className="border-orange-500/50 text-orange-400 hover:bg-slate-800"
+            >
               <span className="sr-only">Toggle menu</span>
               <svg
                 xmlns="http://www.w3.org/2000/svg"
