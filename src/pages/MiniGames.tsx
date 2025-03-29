@@ -1,10 +1,9 @@
-
 import { useState } from "react";
 import { motion } from "framer-motion";
 import { 
   Gamepad, Trophy, Star, Clock, Utensils, Speech, 
   Music, PenTool, Sparkles, Zap, Crown, ChefHat,
-  Globe, Palette
+  Globe, Palette, CookingPot
 } from "lucide-react";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -15,6 +14,7 @@ import PageLayout from "@/components/PageLayout";
 import CookingChallenge from "@/components/games/CookingChallenge";
 import LanguageChallenge from "@/components/games/LanguageChallenge";
 import ArtStudio from "@/components/games/ArtStudio";
+import BurgerTycoon from "@/components/games/BurgerTycoon";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { soundManager } from "@/utils/soundUtils";
 
@@ -33,14 +33,14 @@ const MiniGames = () => {
   const games = [
     {
       id: 1,
-      title: "Sushi Master Challenge",
+      title: "Burger Tycoon",
       category: "cooking",
-      image: "/placeholder.svg",
+      image: "/lovable-uploads/371255ec-eeef-4782-8d23-8b28ebdf92b8.png",
       difficulty: "Medium",
-      timeEstimate: "10 min",
-      players: 124,
-      description: "Test your culinary skills by preparing traditional Japanese sushi dishes against the clock.",
-      rewards: ["Recipe Collection", "Japanese Cooking Badge", "20 Cultural Points"],
+      timeEstimate: "15 min",
+      players: 156,
+      description: "Run your own burger food truck! Cook patties, prepare ingredients, and serve hungry customers.",
+      rewards: ["Master Chef Badge", "Restaurant Tycoon", "30 Cultural Points"],
       featured: true
     },
     {
@@ -53,7 +53,7 @@ const MiniGames = () => {
       players: 246,
       description: "Learn common greetings and phrases from different cultures through interactive flashcards.",
       rewards: ["Language Certificate", "Global Communicator Badge", "15 Cultural Points"],
-      featured: true
+      featured: false
     },
     {
       id: 3,
@@ -81,15 +81,15 @@ const MiniGames = () => {
     },
     {
       id: 5,
-      title: "Spice Market Challenge",
+      title: "Sushi Master Challenge",
       category: "cooking",
-      image: "/placeholder.svg",
+      image: "/lovable-uploads/9f8e05b4-7eaf-44a7-86fe-e150958b3278.png",
       difficulty: "Hard",
-      timeEstimate: "12 min",
-      players: 112,
-      description: "Identify exotic spices from around the world and match them to their cuisines.",
-      rewards: ["Spice Collection", "Flavor Expert Badge", "22 Cultural Points"],
-      featured: false
+      timeEstimate: "10 min",
+      players: 124,
+      description: "Test your culinary skills by preparing delicious sushi dishes against the clock.",
+      rewards: ["Recipe Collection", "Japanese Cooking Badge", "20 Cultural Points"],
+      featured: true
     },
     {
       id: 6,
@@ -120,13 +120,15 @@ const MiniGames = () => {
     }
   };
 
-  const handleGameClick = (gameCategory: string) => {
+  const handleGameClick = (game: { id: number; category: string }) => {
     soundManager.playSound("click");
-    if (gameCategory === "cooking") {
+    if (game.id === 1) {
+      setActiveGame("burger-tycoon");
+    } else if (game.category === "cooking" && game.id === 5) {
       setActiveGame("cooking-challenge");
-    } else if (gameCategory === "language") {
+    } else if (game.category === "language") {
       setActiveGame("language-challenge");
-    } else if (gameCategory === "art") {
+    } else if (game.category === "art") {
       setActiveGame("art-studio");
     }
   };
@@ -177,7 +179,7 @@ const MiniGames = () => {
                       <Button 
                         size="sm" 
                         className="bg-teal-500 hover:bg-teal-600"
-                        onClick={() => handleGameClick(game.category)}
+                        onClick={() => handleGameClick(game)}
                       >
                         Play Now
                       </Button>
@@ -294,7 +296,7 @@ const MiniGames = () => {
                     <Button 
                       size="sm" 
                       className="bg-teal-500 hover:bg-teal-600"
-                      onClick={() => handleGameClick(game.category)}
+                      onClick={() => handleGameClick(game)}
                     >
                       Play
                     </Button>
@@ -315,19 +317,28 @@ const MiniGames = () => {
               Explore global cuisines and learn authentic cooking techniques through fun, interactive challenges.
             </p>
             
-            <div className="mt-4">
+            <div className="mt-4 flex space-x-4 justify-center">
+              <Button 
+                size="lg" 
+                className="bg-orange-500 hover:bg-orange-600"
+                onClick={() => setActiveGame("burger-tycoon")}
+              >
+                <CookingPot className="mr-2 h-5 w-5" />
+                Play Burger Tycoon
+              </Button>
+              
               <Button 
                 size="lg" 
                 className="bg-teal-500 hover:bg-teal-600"
                 onClick={() => setActiveGame("cooking-challenge")}
               >
                 <Utensils className="mr-2 h-5 w-5" />
-                Start Cooking Challenge
+                Start Sushi Challenge
               </Button>
             </div>
           </div>
           
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {games.filter(game => game.category === "cooking").map(game => (
               <Card key={game.id} className="overflow-hidden">
                 <div className="h-32 relative">
@@ -347,7 +358,7 @@ const MiniGames = () => {
                 <CardFooter className="p-4 pt-0">
                   <Button 
                     className="w-full bg-teal-500 hover:bg-teal-600"
-                    onClick={() => setActiveGame("cooking-challenge")}
+                    onClick={() => handleGameClick(game)}
                   >
                     Play
                   </Button>
@@ -399,7 +410,7 @@ const MiniGames = () => {
                 <CardFooter className="p-4 pt-0">
                   <Button 
                     className="w-full bg-blue-500 hover:bg-blue-600"
-                    onClick={() => setActiveGame("language-challenge")}
+                    onClick={() => handleGameClick(game)}
                   >
                     Play
                   </Button>
@@ -451,7 +462,7 @@ const MiniGames = () => {
                 <CardFooter className="p-4 pt-0">
                   <Button 
                     className="w-full bg-purple-500 hover:bg-purple-600"
-                    onClick={() => setActiveGame("art-studio")}
+                    onClick={() => handleGameClick(game)}
                   >
                     Play
                   </Button>
@@ -617,7 +628,18 @@ const MiniGames = () => {
 
   return (
     <PageLayout fullWidth={activeGame !== null}>
-      {activeGame === "cooking-challenge" ? (
+      {activeGame === "burger-tycoon" ? (
+        <div className="mx-auto max-w-6xl">
+          <Button 
+            variant="outline" 
+            className="mb-4"
+            onClick={() => setActiveGame(null)}
+          >
+            Back to Games
+          </Button>
+          <BurgerTycoon />
+        </div>
+      ) : activeGame === "cooking-challenge" ? (
         <div className="mx-auto max-w-6xl">
           <Button 
             variant="outline" 

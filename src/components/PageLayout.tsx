@@ -42,7 +42,7 @@ const PageLayout = ({ children, fullWidth = false }: PageLayoutProps) => {
         ))}
       </div>
       
-      <main className="pt-16 relative z-10">
+      <main className={`pt-16 relative z-10 ${fullWidth ? 'overflow-x-hidden' : ''}`}>
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
