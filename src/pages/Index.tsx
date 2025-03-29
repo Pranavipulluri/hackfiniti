@@ -54,9 +54,13 @@ const Index = () => {
           ))}
         </div>
       
-        {/* Animated Characters */}
-        <AnimatedCharacter characterType="explorer" position="right" delay={500} />
-        <AnimatedCharacter characterType="guide" position="left" delay={800} />
+        {/* Custom Character Images */}
+        <div className="absolute bottom-0 right-0 md:w-64 w-40 opacity-90 z-10 transform translate-y-1/4">
+          <img src="/lovable-uploads/d364c15d-f877-40f4-9df2-cad09b0ec8a2.png" alt="Kerala traditional boy character" className="w-full" />
+        </div>
+        <div className="absolute bottom-0 left-0 md:w-64 w-40 opacity-90 z-10 transform translate-y-1/4">
+          <img src="/lovable-uploads/7ea599b5-bfde-462e-b7e7-454b0a50f062.png" alt="Tour guide character" className="w-full" />
+        </div>
         
         <motion.div
           initial={{ opacity: 0, y: 20 }}
@@ -126,9 +130,6 @@ const Index = () => {
         <div className="absolute bottom-0 left-0 w-full h-12 bg-gradient-to-r from-orange-500/20 via-yellow-500/30 to-orange-500/20"></div>
         
         <div className="container mx-auto px-4 relative z-10">
-          {/* Merchant character in features section */}
-          <AnimatedCharacter characterType="merchant" position="right" delay={1200} />
-          
           <h2 className="font-playfair text-5xl font-bold text-center mb-16 title-text">
             Embark on a Cultural Adventure
           </h2>

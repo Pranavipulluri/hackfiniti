@@ -9,12 +9,21 @@ import {
   Compass, 
   Globe,
   ArrowLeft,
-  Calendar  // Added the missing Calendar import
+  Calendar,
+  Music,
+  Utensils,
+  BookOpen,
+  PaintBrush,
+  Camera,
+  Building,
+  Palmtree,
+  Heart
 } from "lucide-react";
 import { Button } from "./ui/button";
 import { Card, CardContent } from "./ui/card";
 import { Badge } from "./ui/badge";
 import { ScrollArea } from "./ui/scroll-area";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { 
   NavigationMenu,
   NavigationMenuContent,
@@ -62,6 +71,9 @@ export type StateData = {
   description: string;
   culturalHeritage: string[];
   culturalEvents: EventData[];
+  artForms?: ArtFormData[];
+  cuisine?: CuisineData[];
+  landmarks?: LandmarkData[];
 };
 
 export type EventData = {
@@ -69,6 +81,29 @@ export type EventData = {
   name: string;
   description: string;
   date: string;
+  image: string;
+};
+
+export type ArtFormData = {
+  id: string;
+  name: string;
+  description: string;
+  image: string;
+};
+
+export type CuisineData = {
+  id: string;
+  name: string;
+  description: string;
+  ingredients: string[];
+  image: string;
+};
+
+export type LandmarkData = {
+  id: string;
+  name: string;
+  description: string;
+  location: string;
   image: string;
 };
 
@@ -99,29 +134,97 @@ const regionData: Record<string, RegionData> = {
               "Theyyam - Ritual dance worship with elaborate costumes and body painting",
               "Mohiniyattam - Classical dance form with graceful, swaying movements",
               "Kalaripayattu - Ancient martial art, considered one of the oldest fighting systems",
-              "Kerala Architecture - Unique temple and house designs adapted to the tropical climate"
+              "Kerala Architecture - Unique temple and house designs adapted to the tropical climate",
+              "Malayalam Literature - Rich literary tradition with ancient works and modern masters",
+              "Traditional Clothing - Kasavu sarees and mundus with golden borders"
             ],
             culturalEvents: [
               {
                 id: "onam",
                 name: "Onam Festival",
-                description: "The harvest festival of Kerala featuring boat races, floral decorations (pookalam), feasts (Onasadya), and folk dances.",
+                description: "The harvest festival of Kerala featuring boat races, floral decorations (pookalam), feasts (Onasadya), and folk dances. Onam commemorates the return of King Mahabali, and is celebrated with great enthusiasm across Kerala.",
                 date: "August-September (varies yearly)",
-                image: "/placeholder.svg"
+                image: "/lovable-uploads/ca2d6830-e22c-4607-b372-bf96d604334a.png"
               },
               {
                 id: "vishu",
                 name: "Vishu",
-                description: "The Kerala New Year celebration featuring Vishukkani (first sight arrangements), giving of money (Vishukaineetam), and a feast.",
+                description: "The Kerala New Year celebration featuring Vishukkani (first sight arrangements), giving of money (Vishukaineetam), and a feast. Families arrange a ritualistic display of auspicious items to be viewed first thing in the morning.",
                 date: "April 14/15",
-                image: "/placeholder.svg"
+                image: "/lovable-uploads/42770aa5-b929-4ed2-85e0-aa5a9b17ac5b.png"
               },
               {
                 id: "thrissur-pooram",
                 name: "Thrissur Pooram",
-                description: "A spectacular temple festival featuring caparisoned elephants, traditional music, and an umbrella display competition.",
+                description: "A spectacular temple festival featuring caparisoned elephants, traditional music, and an umbrella display competition. It's considered the mother of all temple festivals in Kerala.",
                 date: "April-May",
-                image: "/placeholder.svg"
+                image: "/lovable-uploads/9429424e-cfd6-422e-b4d8-94d66c62b618.png"
+              }
+            ],
+            artForms: [
+              {
+                id: "kathakali",
+                name: "Kathakali",
+                description: "A highly stylized classical Indian dance-drama noted for the attractive make-up of characters, elaborate costumes, detailed gestures and well-defined body movements presented in tune with the anchor playback music and complementary percussion.",
+                image: "/lovable-uploads/91bf8199-59a4-4e3e-96c1-10cd41b289f1.png"
+              },
+              {
+                id: "mohiniyattam",
+                name: "Mohiniyattam",
+                description: "A classical dance form of Kerala, known for its elegant and graceful movements that closely follow the circular path and swaying of the body, emulating the swaying of palm trees.",
+                image: "/lovable-uploads/9429424e-cfd6-422e-b4d8-94d66c62b618.png"
+              },
+              {
+                id: "theyyam",
+                name: "Theyyam",
+                description: "A ritual form of worship where performers take on the spirit of gods and ancestors. The elaborate costumes and dramatic makeup transform the artist into the deity being portrayed.",
+                image: "/lovable-uploads/ca2d6830-e22c-4607-b372-bf96d604334a.png"
+              }
+            ],
+            cuisine: [
+              {
+                id: "sadya",
+                name: "Kerala Sadya",
+                description: "A traditional feast served on a banana leaf with a variety of vegetarian dishes. It's an elaborate meal served during special occasions and festivals.",
+                ingredients: ["Rice", "Sambar", "Avial", "Thoran", "Olan", "Pachadi", "Payasam"],
+                image: "/lovable-uploads/42770aa5-b929-4ed2-85e0-aa5a9b17ac5b.png"
+              },
+              {
+                id: "appam-stew",
+                name: "Appam with Stew",
+                description: "Lacy, soft hoppers made from fermented rice batter and coconut milk, served with a mildly spiced coconut milk stew made with vegetables or meat.",
+                ingredients: ["Rice flour", "Coconut milk", "Vegetables/Meat", "Spices"],
+                image: "/lovable-uploads/9429424e-cfd6-422e-b4d8-94d66c62b618.png"
+              },
+              {
+                id: "malabar-biryani",
+                name: "Malabar Biryani",
+                description: "A fragrant rice dish made with aromatic spices, meat, and a unique Kerala touch of cashews and raisins.",
+                ingredients: ["Basmati rice", "Meat", "Spices", "Cashews", "Raisins"],
+                image: "/lovable-uploads/91bf8199-59a4-4e3e-96c1-10cd41b289f1.png"
+              }
+            ],
+            landmarks: [
+              {
+                id: "backwaters",
+                name: "Kerala Backwaters",
+                description: "A network of interconnected canals, rivers, lakes, and inlets formed by more than 900 km of waterways. The backwaters are home to unique aquatic life and offer a peaceful escape through houseboat cruises.",
+                location: "Alleppey and Kumarakom",
+                image: "/lovable-uploads/ca2d6830-e22c-4607-b372-bf96d604334a.png"
+              },
+              {
+                id: "fort-kochi",
+                name: "Fort Kochi",
+                description: "A historic coastal area known for its colonial architecture, Chinese fishing nets, ancient churches, and multicultural heritage from Portuguese, Dutch, and British influences.",
+                location: "Kochi",
+                image: "/lovable-uploads/42770aa5-b929-4ed2-85e0-aa5a9b17ac5b.png"
+              },
+              {
+                id: "padmanabhaswamy",
+                name: "Padmanabhaswamy Temple",
+                description: "An ancient temple dedicated to Lord Vishnu. Known for its Dravidian architecture and historical significance, it gained worldwide attention for its vast treasure vaults.",
+                location: "Thiruvananthapuram",
+                image: "/lovable-uploads/9429424e-cfd6-422e-b4d8-94d66c62b618.png"
               }
             ]
           },
@@ -289,6 +392,7 @@ const RegionMap = ({ initialRegion = "asia" }: RegionMapProps) => {
   const [selectedCountry, setSelectedCountry] = useState<CountryData | null>(null);
   const [selectedState, setSelectedState] = useState<StateData | null>(null);
   const [navigationHistory, setNavigationHistory] = useState<string[]>([]);
+  const [selectedTab, setSelectedTab] = useState("overview");
 
   // Reset state when the region changes
   useEffect(() => {
@@ -305,11 +409,13 @@ const RegionMap = ({ initialRegion = "asia" }: RegionMapProps) => {
     setSelectedCountry(country);
     setSelectedState(null);
     setNavigationHistory([...navigationHistory, 'region']);
+    setSelectedTab("overview");
   };
   
   const navigateToState = (state: StateData) => {
     setSelectedState(state);
     setNavigationHistory([...navigationHistory, 'country']);
+    setSelectedTab("overview");
   };
   
   const navigateBack = () => {
@@ -322,6 +428,7 @@ const RegionMap = ({ initialRegion = "asia" }: RegionMapProps) => {
       setSelectedCountry(null);
       setNavigationHistory([]);
     }
+    setSelectedTab("overview");
   };
 
   return (
@@ -595,72 +702,309 @@ const RegionMap = ({ initialRegion = "asia" }: RegionMapProps) => {
         <div className="space-y-6">
           <Card className="bg-slate-800/80 border border-teal-500/30 overflow-hidden">
             <CardContent className="p-6">
-              <h2 className="text-3xl font-bold text-white mb-2">{selectedState.name}</h2>
-              <p className="text-gray-300 mb-6">{selectedState.description}</p>
+              <div className="flex items-center mb-6">
+                <div>
+                  <h1 className="text-4xl font-playfair font-bold text-white mb-2">
+                    {selectedState.name}
+                    <span className="ml-3 text-teal-400 text-lg font-normal">God's Own Country</span>
+                  </h1>
+                  <p className="text-gray-300 leading-relaxed">{selectedState.description}</p>
+                </div>
+                <div className="hidden md:block">
+                  <img 
+                    src="/lovable-uploads/d364c15d-f877-40f4-9df2-cad09b0ec8a2.png" 
+                    alt="Kerala Character" 
+                    className="h-32 ml-4" 
+                  />
+                </div>
+              </div>
               
-              {/* Cultural Heritage */}
-              <h3 className="text-xl font-semibold text-white mb-3">Cultural Heritage</h3>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-                {selectedState.culturalHeritage.map((heritage, index) => (
-                  <Card key={index} className="bg-slate-700/50 border border-teal-500/20">
-                    <CardContent className="p-4">
-                      <div className="flex">
-                        <span className="flex-shrink-0 w-8 h-8 rounded-full bg-teal-500/20 flex items-center justify-center text-teal-300 mr-3">
-                          {index + 1}
-                        </span>
-                        <p className="text-white">{heritage}</p>
+              {/* Tabs for Kerala content */}
+              <Tabs defaultValue="overview" value={selectedTab} onValueChange={setSelectedTab} className="w-full">
+                <TabsList className="bg-slate-700/50 grid w-full grid-cols-2 md:grid-cols-5">
+                  <TabsTrigger value="overview" className="data-[state=active]:bg-teal-600">
+                    <Info className="h-4 w-4 mr-2" />
+                    Overview
+                  </TabsTrigger>
+                  <TabsTrigger value="festivals" className="data-[state=active]:bg-teal-600">
+                    <Calendar className="h-4 w-4 mr-2" />
+                    Festivals
+                  </TabsTrigger>
+                  <TabsTrigger value="arts" className="data-[state=active]:bg-teal-600">
+                    <PaintBrush className="h-4 w-4 mr-2" />
+                    Arts
+                  </TabsTrigger>
+                  <TabsTrigger value="cuisine" className="data-[state=active]:bg-teal-600">
+                    <Utensils className="h-4 w-4 mr-2" />
+                    Cuisine
+                  </TabsTrigger>
+                  <TabsTrigger value="landmarks" className="data-[state=active]:bg-teal-600">
+                    <Building className="h-4 w-4 mr-2" />
+                    Landmarks
+                  </TabsTrigger>
+                </TabsList>
+                
+                {/* Overview Tab */}
+                <TabsContent value="overview" className="mt-6">
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <Card className="col-span-2 bg-slate-700/30 border-teal-500/20">
+                      <CardContent className="p-4">
+                        <h3 className="text-xl font-semibold text-white mb-3">Cultural Heritage</h3>
+                        <div className="grid grid-cols-1 gap-4">
+                          {selectedState.culturalHeritage.map((heritage, index) => (
+                            <div key={index} className="flex">
+                              <span className="flex-shrink-0 w-8 h-8 rounded-full bg-teal-500/20 flex items-center justify-center text-teal-300 mr-3">
+                                {index + 1}
+                              </span>
+                              <div>
+                                <p className="text-white">{heritage}</p>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </CardContent>
+                    </Card>
+                    
+                    <Card className="bg-gradient-to-b from-teal-900/20 to-slate-800/40 border-teal-500/20">
+                      <CardContent className="p-4">
+                        <h3 className="text-xl font-semibold text-white mb-3">Quick Facts</h3>
+                        <ul className="space-y-3">
+                          <li className="flex items-start">
+                            <span className="w-6 h-6 rounded-full bg-teal-500/20 flex items-center justify-center text-teal-300 mr-2 mt-0.5">
+                              <Palmtree className="h-3 w-3" />
+                            </span>
+                            <p className="text-gray-300 text-sm">Known as the land of coconuts, backwaters, and spices</p>
+                          </li>
+                          <li className="flex items-start">
+                            <span className="w-6 h-6 rounded-full bg-teal-500/20 flex items-center justify-center text-teal-300 mr-2 mt-0.5">
+                              <BookOpen className="h-3 w-3" />
+                            </span>
+                            <p className="text-gray-300 text-sm">High literacy rate of 96.2%, highest in India</p>
+                          </li>
+                          <li className="flex items-start">
+                            <span className="w-6 h-6 rounded-full bg-teal-500/20 flex items-center justify-center text-teal-300 mr-2 mt-0.5">
+                              <Flag className="h-3 w-3" />
+                            </span>
+                            <p className="text-gray-300 text-sm">Malayalam is the official language</p>
+                          </li>
+                          <li className="flex items-start">
+                            <span className="w-6 h-6 rounded-full bg-teal-500/20 flex items-center justify-center text-teal-300 mr-2 mt-0.5">
+                              <Calendar className="h-3 w-3" />
+                            </span>
+                            <p className="text-gray-300 text-sm">Celebrates over 10 major festivals throughout the year</p>
+                          </li>
+                          <li className="flex items-start">
+                            <span className="w-6 h-6 rounded-full bg-teal-500/20 flex items-center justify-center text-teal-300 mr-2 mt-0.5">
+                              <Heart className="h-3 w-3" />
+                            </span>
+                            <p className="text-gray-300 text-sm">Home to Ayurveda, an ancient holistic healing system</p>
+                          </li>
+                        </ul>
+                      </CardContent>
+                    </Card>
+                  </div>
+                  
+                  {/* Kerala Sadya Feature */}
+                  <Card className="mt-6 bg-gradient-to-r from-teal-900/40 to-slate-800/60 border border-teal-500/30">
+                    <CardContent className="p-6">
+                      <div className="flex flex-col md:flex-row gap-6 items-center">
+                        <div className="w-full md:w-1/3 h-48 bg-slate-700 rounded-lg overflow-hidden">
+                          <img src="/lovable-uploads/42770aa5-b929-4ed2-85e0-aa5a9b17ac5b.png" alt="Kerala Sadya" className="w-full h-full object-cover" />
+                        </div>
+                        <div className="w-full md:w-2/3">
+                          <Badge className="mb-2 bg-teal-500">Cultural Experience</Badge>
+                          <h3 className="text-2xl font-bold text-white mb-2">Kerala Sadya: The Traditional Feast</h3>
+                          <p className="text-gray-300 mb-4">
+                            The Kerala Sadya is a traditional vegetarian feast served on a banana leaf, usually during festivals like Onam and Vishu. It includes a variety of dishes like avial, sambar, olan, thoran, pachadi, and payasam, each with its specific place on the banana leaf.
+                          </p>
+                          <Button className="bg-teal-600 hover:bg-teal-700">
+                            Try Cooking Sadya
+                          </Button>
+                        </div>
                       </div>
                     </CardContent>
                   </Card>
-                ))}
-              </div>
-              
-              {/* Cultural Events */}
-              <h3 className="text-xl font-semibold text-white mb-3">Cultural Events & Festivals</h3>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                {selectedState.culturalEvents.map(event => (
-                  <Card key={event.id} className="overflow-hidden bg-slate-700/50 border border-teal-500/20">
-                    <div className="h-40 bg-slate-600 relative">
-                      <img src={event.image} alt={event.name} className="w-full h-full object-cover" />
-                      <div className="absolute inset-0 bg-gradient-to-t from-slate-900/80 to-transparent"></div>
-                      <h4 className="absolute bottom-3 left-3 text-white font-bold text-lg">{event.name}</h4>
-                    </div>
-                    <CardContent className="p-4">
-                      <div className="flex items-center text-gray-300 text-sm mb-2">
-                        <Calendar className="h-4 w-4 mr-1 text-teal-400" />
-                        {event.date}
+                </TabsContent>
+                
+                {/* Festivals Tab */}
+                <TabsContent value="festivals" className="mt-6">
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    {selectedState.culturalEvents.map(event => (
+                      <Card key={event.id} className="overflow-hidden bg-slate-700/50 border border-teal-500/20">
+                        <div className="h-40 bg-slate-600 relative">
+                          <img src={event.image} alt={event.name} className="w-full h-full object-cover" />
+                          <div className="absolute inset-0 bg-gradient-to-t from-slate-900/80 to-transparent"></div>
+                          <h4 className="absolute bottom-3 left-3 text-white font-bold text-lg">{event.name}</h4>
+                        </div>
+                        <CardContent className="p-4">
+                          <div className="flex items-center text-gray-300 text-sm mb-2">
+                            <Calendar className="h-4 w-4 mr-1 text-teal-400" />
+                            {event.date}
+                          </div>
+                          <p className="text-gray-300 text-sm">{event.description}</p>
+                          <Button size="sm" className="mt-3 bg-teal-600 hover:bg-teal-700">
+                            Learn More
+                          </Button>
+                        </CardContent>
+                      </Card>
+                    ))}
+                    
+                    {/* Additional festival */}
+                    <Card className="overflow-hidden bg-slate-700/50 border border-teal-500/20">
+                      <div className="h-40 bg-slate-600 relative">
+                        <img src="/lovable-uploads/91bf8199-59a4-4e3e-96c1-10cd41b289f1.png" alt="Boat Race" className="w-full h-full object-cover" />
+                        <div className="absolute inset-0 bg-gradient-to-t from-slate-900/80 to-transparent"></div>
+                        <h4 className="absolute bottom-3 left-3 text-white font-bold text-lg">Nehru Trophy Boat Race</h4>
                       </div>
-                      <p className="text-gray-300 text-sm">{event.description}</p>
-                      <Button size="sm" className="mt-3 bg-teal-600 hover:bg-teal-700">
-                        Learn More
-                      </Button>
-                    </CardContent>
-                  </Card>
-                ))}
-              </div>
-              
-              {/* Sadya cultural connection */}
-              {selectedState.id === "kerala" && (
-                <Card className="mt-6 bg-gradient-to-r from-teal-900/40 to-slate-800/60 border border-teal-500/30">
-                  <CardContent className="p-6">
-                    <div className="flex flex-col md:flex-row gap-6 items-center">
-                      <div className="w-full md:w-1/3 h-48 bg-slate-700 rounded-lg overflow-hidden">
-                        <img src="/placeholder.svg" alt="Kerala Sadya" className="w-full h-full object-cover" />
-                      </div>
-                      <div className="w-full md:w-2/3">
-                        <Badge className="mb-2 bg-teal-500">Cultural Experience</Badge>
-                        <h3 className="text-2xl font-bold text-white mb-2">Kerala Sadya: The Traditional Feast</h3>
-                        <p className="text-gray-300 mb-4">
-                          The Kerala Sadya is a traditional vegetarian feast served on a banana leaf, usually during festivals like Onam and Vishu. It includes a variety of dishes like avial, sambar, olan, thoran, pachadi, and payasam, each with its specific place on the banana leaf.
-                        </p>
-                        <Button className="bg-teal-600 hover:bg-teal-700">
-                          Try Cooking Sadya
+                      <CardContent className="p-4">
+                        <div className="flex items-center text-gray-300 text-sm mb-2">
+                          <Calendar className="h-4 w-4 mr-1 text-teal-400" />
+                          August (Second Saturday)
+                        </div>
+                        <p className="text-gray-300 text-sm">A popular snake boat race held in the Punnamada Lake near Alappuzha, featuring long boats carrying up to 100 rowers competing for the prestigious trophy.</p>
+                        <Button size="sm" className="mt-3 bg-teal-600 hover:bg-teal-700">
+                          Learn More
                         </Button>
-                      </div>
+                      </CardContent>
+                    </Card>
+                  </div>
+                </TabsContent>
+                
+                {/* Arts Tab */}
+                <TabsContent value="arts" className="mt-6">
+                  {selectedState.artForms && (
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                      {selectedState.artForms.map(artForm => (
+                        <Card key={artForm.id} className="overflow-hidden bg-slate-700/50 border border-teal-500/20">
+                          <div className="flex flex-col md:flex-row">
+                            <div className="md:w-1/3">
+                              <img src={artForm.image} alt={artForm.name} className="w-full h-full object-cover" />
+                            </div>
+                            <div className="md:w-2/3 p-4">
+                              <h4 className="text-xl font-bold text-white mb-2">{artForm.name}</h4>
+                              <p className="text-gray-300 text-sm">{artForm.description}</p>
+                              <Button size="sm" className="mt-3 bg-teal-600 hover:bg-teal-700">
+                                Learn More
+                              </Button>
+                            </div>
+                          </div>
+                        </Card>
+                      ))}
+                      
+                      {/* Additional art form */}
+                      <Card className="overflow-hidden bg-slate-700/50 border border-teal-500/20">
+                        <div className="flex flex-col md:flex-row">
+                          <div className="md:w-1/3">
+                            <img src="/lovable-uploads/ca2d6830-e22c-4607-b372-bf96d604334a.png" alt="Kalaripayattu" className="w-full h-full object-cover" />
+                          </div>
+                          <div className="md:w-2/3 p-4">
+                            <h4 className="text-xl font-bold text-white mb-2">Kalaripayattu</h4>
+                            <p className="text-gray-300 text-sm">One of the oldest martial art forms in the world, originating in Kerala. It combines strikes, kicks, grappling, weaponry, and healing techniques, focusing on flexibility, coordination, and discipline.</p>
+                            <Button size="sm" className="mt-3 bg-teal-600 hover:bg-teal-700">
+                              Learn More
+                            </Button>
+                          </div>
+                        </div>
+                      </Card>
                     </div>
-                  </CardContent>
-                </Card>
-              )}
+                  )}
+                </TabsContent>
+                
+                {/* Cuisine Tab */}
+                <TabsContent value="cuisine" className="mt-6">
+                  {selectedState.cuisine && (
+                    <div className="space-y-6">
+                      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                        {selectedState.cuisine.map(dish => (
+                          <Card key={dish.id} className="overflow-hidden bg-slate-700/50 border border-teal-500/20">
+                            <div className="h-40 bg-slate-600 relative">
+                              <img src={dish.image} alt={dish.name} className="w-full h-full object-cover" />
+                              <div className="absolute inset-0 bg-gradient-to-t from-slate-900/80 to-transparent"></div>
+                              <h4 className="absolute bottom-3 left-3 text-white font-bold text-lg">{dish.name}</h4>
+                            </div>
+                            <CardContent className="p-4">
+                              <p className="text-gray-300 text-sm mb-3">{dish.description}</p>
+                              <div>
+                                <h5 className="text-teal-400 text-sm font-medium mb-1">Key Ingredients:</h5>
+                                <div className="flex flex-wrap gap-1">
+                                  {dish.ingredients.map((ingredient, idx) => (
+                                    <Badge key={idx} variant="outline" className="bg-teal-900/30 text-teal-300 border-teal-500/30">
+                                      {ingredient}
+                                    </Badge>
+                                  ))}
+                                </div>
+                              </div>
+                            </CardContent>
+                          </Card>
+                        ))}
+                      </div>
+                      
+                      {/* Interactive Sadya Experience */}
+                      <Card className="bg-gradient-to-r from-teal-900/40 to-slate-800/60 border border-teal-500/30">
+                        <CardContent className="p-6">
+                          <h3 className="text-2xl font-bold text-white mb-4">Virtual Sadya Experience</h3>
+                          <div className="relative h-[300px] bg-slate-700/50 rounded-xl overflow-hidden">
+                            <img 
+                              src="/lovable-uploads/42770aa5-b929-4ed2-85e0-aa5a9b17ac5b.png" 
+                              alt="Kerala Sadya on banana leaf" 
+                              className="w-full h-full object-cover opacity-40" 
+                            />
+                            <div className="absolute inset-0 flex items-center justify-center">
+                              <p className="text-white text-lg px-6 text-center">Interactive banana leaf with dishes coming soon! Click on each dish to learn about its ingredients and cultural significance.</p>
+                            </div>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    </div>
+                  )}
+                </TabsContent>
+                
+                {/* Landmarks Tab */}
+                <TabsContent value="landmarks" className="mt-6">
+                  {selectedState.landmarks && (
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                      {selectedState.landmarks.map(landmark => (
+                        <Card key={landmark.id} className="overflow-hidden bg-slate-700/50 border border-teal-500/20">
+                          <div className="h-40 bg-slate-600 relative">
+                            <img src={landmark.image} alt={landmark.name} className="w-full h-full object-cover" />
+                            <div className="absolute inset-0 bg-gradient-to-t from-slate-900/80 to-transparent"></div>
+                            <h4 className="absolute bottom-3 left-3 text-white font-bold text-lg">{landmark.name}</h4>
+                          </div>
+                          <CardContent className="p-4">
+                            <div className="flex items-center text-gray-300 text-sm mb-2">
+                              <MapPin className="h-4 w-4 mr-1 text-teal-400" />
+                              {landmark.location}
+                            </div>
+                            <p className="text-gray-300 text-sm">{landmark.description}</p>
+                            <Button size="sm" className="mt-3 bg-teal-600 hover:bg-teal-700">
+                              Virtual Tour
+                            </Button>
+                          </CardContent>
+                        </Card>
+                      ))}
+                      
+                      {/* Additional landmark */}
+                      <Card className="overflow-hidden bg-slate-700/50 border border-teal-500/20">
+                        <div className="h-40 bg-slate-600 relative">
+                          <img src="/lovable-uploads/9429424e-cfd6-422e-b4d8-94d66c62b618.png" alt="Munnar" className="w-full h-full object-cover" />
+                          <div className="absolute inset-0 bg-gradient-to-t from-slate-900/80 to-transparent"></div>
+                          <h4 className="absolute bottom-3 left-3 text-white font-bold text-lg">Munnar Tea Gardens</h4>
+                        </div>
+                        <CardContent className="p-4">
+                          <div className="flex items-center text-gray-300 text-sm mb-2">
+                            <MapPin className="h-4 w-4 mr-1 text-teal-400" />
+                            Idukki District
+                          </div>
+                          <p className="text-gray-300 text-sm">Stunning hillstation featuring vast stretches of tea plantations, winding roads, and misty valleys. One of Kerala's most popular tourist destinations known for its natural beauty.</p>
+                          <Button size="sm" className="mt-3 bg-teal-600 hover:bg-teal-700">
+                            Virtual Tour
+                          </Button>
+                        </CardContent>
+                      </Card>
+                    </div>
+                  )}
+                </TabsContent>
+              </Tabs>
             </CardContent>
           </Card>
         </div>
