@@ -8,7 +8,8 @@ import {
   Flag, 
   Compass, 
   Globe,
-  ArrowLeft
+  ArrowLeft,
+  Calendar  // Added the missing Calendar import
 } from "lucide-react";
 import { Button } from "./ui/button";
 import { Card, CardContent } from "./ui/card";
