@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { 
@@ -13,7 +12,7 @@ import {
   Music,
   Utensils,
   BookOpen,
-  PaintBrush,
+  Paintbrush,
   Camera,
   Building,
   Palmtree,
@@ -34,7 +33,6 @@ import {
   navigationMenuTriggerStyle,
 } from "@/components/ui/navigation-menu";
 
-// Map image paths for different regions
 const regionMapImages = {
   asia: "/lovable-uploads/30e5b83a-25ac-43e1-90d3-80a21f1a319e.png",
   europe: "/lovable-uploads/cbe5bfa0-e4c5-49b1-a687-8151662d21ea.png",
@@ -44,7 +42,6 @@ const regionMapImages = {
   india: "/lovable-uploads/81342f88-cc2b-47e3-867e-b10f1e059c2c.png",
 };
 
-// Types for region data
 export type RegionData = {
   id: string;
   name: string;
@@ -107,7 +104,6 @@ export type LandmarkData = {
   image: string;
 };
 
-// Mock data
 const regionData: Record<string, RegionData> = {
   asia: {
     id: "asia",
