@@ -1,0 +1,417 @@
+
+import { useState, useEffect, useCallback } from "react";
+import { Button } from "@/components/ui/button";
+import { ArrowLeft, MapPin, Info } from "lucide-react";
+import { motion } from "framer-motion";
+
+// Define map tiles and landmarks
+const TILE_SIZE = 40;
+const MAP_WIDTH = 15;
+const MAP_HEIGHT = 12;
+
+// Tile types
+enum TileType {
+  GRASS = 0,
+  PATH = 1,
+  WATER = 2,
+  TREE = 3,
+  LANDMARK = 4,
+  BUILDING = 5,
+}
+
+// Landmarks data
+const landmarks = [
+  { id: 1, name: "Backwaters", x: 3, y: 3, description: "Kerala's famous backwaters, a network of canals, rivers and lakes." },
+  { id: 2, name: "Fort Kochi", x: 2, y: 8, description: "Historic coastal area with colonial architecture and Chinese fishing nets." },
+  { id: 3, name: "Munnar", x: 10, y: 2, description: "Hill station known for its tea plantations and cool climate." },
+  { id: 4, name: "Thekkady", x: 12, y: 5, description: "Home to the Periyar Wildlife Sanctuary and spice plantations." },
+  { id: 5, name: "Kovalam Beach", x: 8, y: 9, description: "Famous crescent-shaped beach with lighthouse views." },
+];
+
+// Character directions
+enum Direction {
+  UP,
+  DOWN,
+  LEFT,
+  RIGHT,
+}
+
+// Define the game map
+const createMap = () => {
+  const map = Array(MAP_HEIGHT).fill(0).map(() => Array(MAP_WIDTH).fill(TileType.GRASS));
+  
+  // Add paths
+  for (let x = 1; x < MAP_WIDTH - 1; x++) {
+    map[5][x] = TileType.PATH;
+  }
+  
+  for (let y = 1; y < MAP_HEIGHT - 1; y++) {
+    map[y][7] = TileType.PATH;
+  }
+  
+  // Add water
+  map[3][1] = TileType.WATER;
+  map[3][2] = TileType.WATER;
+  map[4][1] = TileType.WATER;
+  map[4][2] = TileType.WATER;
+  map[4][3] = TileType.WATER;
+  
+  // Add trees
+  map[1][1] = TileType.TREE;
+  map[1][9] = TileType.TREE;
+  map[2][3] = TileType.TREE;
+  map[2][12] = TileType.TREE;
+  map[8][2] = TileType.TREE;
+  map[8][13] = TileType.TREE;
+  map[10][4] = TileType.TREE;
+  map[10][10] = TileType.TREE;
+  
+  // Add buildings
+  map[1][4] = TileType.BUILDING;
+  map[9][3] = TileType.BUILDING;
+  map[7][13] = TileType.BUILDING;
+  
+  // Add landmarks
+  landmarks.forEach(landmark => {
+    map[landmark.y][landmark.x] = TileType.LANDMARK;
+  });
+  
+  return map;
+};
+
+const KeralaItinerary = () => {
+  const [map] = useState(createMap);
+  const [playerPosition, setPlayerPosition] = useState({ x: 7, y: 5 });
+  const [playerDirection, setPlayerDirection] = useState(Direction.DOWN);
+  const [activeLandmark, setActiveLandmark] = useState<typeof landmarks[0] | null>(null);
+  const [showInstructions, setShowInstructions] = useState(true);
+
+  const movePlayer = useCallback((dx: number, dy: number) => {
+    setPlayerPosition(prev => {
+      const newX = prev.x + dx;
+      const newY = prev.y + dy;
+      
+      // Check map boundaries
+      if (newX < 0 || newX >= MAP_WIDTH || newY < 0 || newY >= MAP_HEIGHT) {
+        return prev;
+      }
+      
+      // Check if the tile is walkable
+      const tileType = map[newY][newX];
+      if (tileType === TileType.TREE || tileType === TileType.WATER || tileType === TileType.BUILDING) {
+        return prev;
+      }
+      
+      // Set direction based on movement
+      if (dx > 0) setPlayerDirection(Direction.RIGHT);
+      else if (dx < 0) setPlayerDirection(Direction.LEFT);
+      else if (dy > 0) setPlayerDirection(Direction.DOWN);
+      else if (dy < 0) setPlayerDirection(Direction.UP);
+      
+      // If moving to a landmark, display info
+      if (tileType === TileType.LANDMARK) {
+        const landmark = landmarks.find(l => l.x === newX && l.y === newY);
+        if (landmark) {
+          setActiveLandmark(landmark);
+        }
+      } else {
+        setActiveLandmark(null);
+      }
+      
+      return { x: newX, y: newY };
+    });
+  }, [map]);
+
+  // Handle keyboard input
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      switch (e.key) {
+        case "ArrowUp":
+          movePlayer(0, -1);
+          break;
+        case "ArrowDown":
+          movePlayer(0, 1);
+          break;
+        case "ArrowLeft":
+          movePlayer(-1, 0);
+          break;
+        case "ArrowRight":
+          movePlayer(1, 0);
+          break;
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [movePlayer]);
+
+  // Render tile based on type
+  const renderTile = (type: TileType, x: number, y: number) => {
+    switch (type) {
+      case TileType.GRASS:
+        return (
+          <div 
+            key={`tile-${x}-${y}`} 
+            className="absolute bg-green-600" 
+            style={{ 
+              width: TILE_SIZE, 
+              height: TILE_SIZE, 
+              left: x * TILE_SIZE, 
+              top: y * TILE_SIZE 
+            }}
+          />
+        );
+      case TileType.PATH:
+        return (
+          <div 
+            key={`tile-${x}-${y}`} 
+            className="absolute bg-amber-300" 
+            style={{ 
+              width: TILE_SIZE, 
+              height: TILE_SIZE, 
+              left: x * TILE_SIZE, 
+              top: y * TILE_SIZE 
+            }}
+          />
+        );
+      case TileType.WATER:
+        return (
+          <div 
+            key={`tile-${x}-${y}`} 
+            className="absolute bg-blue-500" 
+            style={{ 
+              width: TILE_SIZE, 
+              height: TILE_SIZE, 
+              left: x * TILE_SIZE, 
+              top: y * TILE_SIZE 
+            }}
+          />
+        );
+      case TileType.TREE:
+        return (
+          <div 
+            key={`tile-${x}-${y}`} 
+            className="absolute" 
+            style={{ 
+              width: TILE_SIZE, 
+              height: TILE_SIZE, 
+              left: x * TILE_SIZE, 
+              top: y * TILE_SIZE 
+            }}
+          >
+            <div className="w-full h-2/3 bg-green-800 rounded-full absolute bottom-0" />
+            <div className="w-1/4 h-1/3 bg-brown-600 absolute bottom-0 left-[38%]" />
+          </div>
+        );
+      case TileType.LANDMARK:
+        const landmark = landmarks.find(l => l.x === x && l.y === y);
+        return (
+          <div 
+            key={`tile-${x}-${y}`} 
+            className="absolute" 
+            style={{ 
+              width: TILE_SIZE, 
+              height: TILE_SIZE, 
+              left: x * TILE_SIZE, 
+              top: y * TILE_SIZE 
+            }}
+          >
+            <div className="w-full h-full bg-amber-300" />
+            <div className="absolute inset-0 flex items-center justify-center">
+              <div className="w-3/4 h-3/4 bg-red-500 rounded-full flex items-center justify-center text-white text-xs font-bold animate-pulse">
+                {landmark ? landmark.id : "?"}
+              </div>
+            </div>
+          </div>
+        );
+      case TileType.BUILDING:
+        return (
+          <div 
+            key={`tile-${x}-${y}`} 
+            className="absolute" 
+            style={{ 
+              width: TILE_SIZE, 
+              height: TILE_SIZE, 
+              left: x * TILE_SIZE, 
+              top: y * TILE_SIZE 
+            }}
+          >
+            <div className="w-full h-3/4 bg-gray-700 absolute bottom-0" />
+            <div className="w-full h-1/4 bg-red-800 absolute top-0 transform -translate-y-1/4" />
+          </div>
+        );
+      default:
+        return null;
+    }
+  };
+
+  // Render control buttons for mobile
+  const renderControls = () => (
+    <div className="absolute bottom-4 right-4 grid grid-cols-3 gap-2 w-36 h-36">
+      <div className="col-start-2">
+        <Button 
+          onClick={() => movePlayer(0, -1)}
+          className="w-12 h-12 bg-slate-700/70 rounded-full p-0"
+        >
+          ↑
+        </Button>
+      </div>
+      <div className="col-start-1 row-start-2">
+        <Button 
+          onClick={() => movePlayer(-1, 0)}
+          className="w-12 h-12 bg-slate-700/70 rounded-full p-0"
+        >
+          ←
+        </Button>
+      </div>
+      <div className="col-start-3 row-start-2">
+        <Button 
+          onClick={() => movePlayer(1, 0)}
+          className="w-12 h-12 bg-slate-700/70 rounded-full p-0"
+        >
+          →
+        </Button>
+      </div>
+      <div className="col-start-2 row-start-3">
+        <Button 
+          onClick={() => movePlayer(0, 1)}
+          className="w-12 h-12 bg-slate-700/70 rounded-full p-0"
+        >
+          ↓
+        </Button>
+      </div>
+    </div>
+  );
+
+  // Character sprite based on direction
+  const getCharacterStyle = () => {
+    const baseStyle = {
+      width: TILE_SIZE, 
+      height: TILE_SIZE, 
+      left: playerPosition.x * TILE_SIZE, 
+      top: playerPosition.y * TILE_SIZE
+    };
+    
+    // We'll use a simple colored box as the character
+    // In a full implementation, you'd use sprite images for different directions
+    return baseStyle;
+  };
+
+  return (
+    <div className="bg-slate-900 p-4 rounded-lg w-full h-full overflow-hidden">
+      <div className="flex items-center mb-4">
+        <Button variant="ghost" className="mr-2" onClick={() => window.history.back()}>
+          <ArrowLeft className="h-5 w-5 text-white" />
+        </Button>
+        <h2 className="text-2xl font-bold text-white">My Kerala Itinerary</h2>
+      </div>
+      
+      {showInstructions && (
+        <motion.div 
+          className="bg-slate-800/90 backdrop-blur-sm p-4 rounded-lg mb-4 text-white"
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+        >
+          <div className="flex justify-between items-start">
+            <div>
+              <h3 className="text-lg font-semibold mb-2">Welcome to Kerala Explorer!</h3>
+              <p className="text-sm text-gray-300 mb-2">Use arrow keys or on-screen controls to move your character.</p>
+              <p className="text-sm text-gray-300">Visit the numbered landmarks to discover Kerala's attractions.</p>
+            </div>
+            <Button 
+              variant="ghost" 
+              size="sm" 
+              onClick={() => setShowInstructions(false)}
+              className="text-gray-400 hover:text-white"
+            >
+              Close
+            </Button>
+          </div>
+        </motion.div>
+      )}
+
+      <div className="relative bg-green-800 rounded-lg overflow-hidden shadow-xl border border-teal-900/50" 
+        style={{ width: MAP_WIDTH * TILE_SIZE, height: MAP_HEIGHT * TILE_SIZE }}>
+        {/* Render map tiles */}
+        {map.map((row, y) => 
+          row.map((tile, x) => renderTile(tile, x, y))
+        )}
+        
+        {/* Player character */}
+        <motion.div 
+          className="absolute z-10 flex items-center justify-center"
+          style={getCharacterStyle()}
+          initial={{ scale: 0 }}
+          animate={{ scale: 1 }}
+          transition={{ type: "spring", stiffness: 500, damping: 30 }}
+        >
+          <div className="w-3/4 h-3/4 bg-yellow-500 rounded-full relative overflow-hidden">
+            {/* Simple face */}
+            <div className="absolute top-1/4 left-1/4 w-1/6 h-1/6 bg-black rounded-full" />
+            <div className="absolute top-1/4 right-1/4 w-1/6 h-1/6 bg-black rounded-full" />
+            {playerDirection === Direction.UP && 
+              <div className="absolute top-1/2 left-[40%] w-1/5 h-1/10 bg-black rounded-full" />
+            }
+            {playerDirection === Direction.DOWN && 
+              <div className="absolute top-[60%] left-[40%] w-1/5 h-1/10 bg-black rounded-full transform rotate-180" />
+            }
+            {playerDirection === Direction.LEFT && 
+              <div className="absolute top-[45%] left-[30%] w-1/5 h-1/10 bg-black rounded-full" />
+            }
+            {playerDirection === Direction.RIGHT && 
+              <div className="absolute top-[45%] right-[30%] w-1/5 h-1/10 bg-black rounded-full" />
+            }
+          </div>
+        </motion.div>
+      </div>
+      
+      {/* Landmark information */}
+      {activeLandmark && (
+        <motion.div 
+          className="mt-4 bg-slate-800/90 backdrop-blur-sm p-4 rounded-lg text-white"
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+        >
+          <div className="flex items-start gap-3">
+            <div className="bg-red-500 rounded-full w-10 h-10 flex items-center justify-center flex-shrink-0">
+              <MapPin className="h-5 w-5 text-white" />
+            </div>
+            <div>
+              <h3 className="text-xl font-bold mb-1">{activeLandmark.name}</h3>
+              <p className="text-gray-300">{activeLandmark.description}</p>
+            </div>
+          </div>
+        </motion.div>
+      )}
+      
+      {/* Legend */}
+      <div className="mt-4 bg-slate-800/80 p-3 rounded-lg">
+        <h3 className="text-white text-sm font-semibold mb-2 flex items-center">
+          <Info className="h-4 w-4 mr-1" />
+          Kerala Map Legend
+        </h3>
+        <div className="grid grid-cols-2 md:grid-cols-3 gap-2 text-xs text-gray-300">
+          <div className="flex items-center">
+            <div className="w-4 h-4 bg-amber-300 mr-2"></div>
+            <span>Path</span>
+          </div>
+          <div className="flex items-center">
+            <div className="w-4 h-4 bg-blue-500 mr-2"></div>
+            <span>Backwaters</span>
+          </div>
+          <div className="flex items-center">
+            <div className="w-4 h-4 bg-red-500 rounded-full mr-2 flex items-center justify-center text-white text-[8px]">
+              <span>1</span>
+            </div>
+            <span>Landmark</span>
+          </div>
+        </div>
+      </div>
+      
+      {/* Mobile controls */}
+      {renderControls()}
+    </div>
+  );
+};
+
+export default KeralaItinerary;
