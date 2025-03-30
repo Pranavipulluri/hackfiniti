@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { 
@@ -727,7 +728,7 @@ const RegionMap = ({ initialRegion = "asia" }: RegionMapProps) => {
                     Festivals
                   </TabsTrigger>
                   <TabsTrigger value="arts" className="data-[state=active]:bg-teal-600">
-                    <PaintBrush className="h-4 w-4 mr-2" />
+                    <Paintbrush className="h-4 w-4 mr-2" />
                     Arts
                   </TabsTrigger>
                   <TabsTrigger value="cuisine" className="data-[state=active]:bg-teal-600">
