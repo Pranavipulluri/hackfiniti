@@ -55,7 +55,10 @@ const Exploration = () => {
                 </div>
                 
                 <div className="p-4">
-                  <RegionMap initialRegion={activeRegion} />
+                  <RegionMap 
+                    initialRegion={activeRegion} 
+                    onShowItinerary={() => setShowItinerary(true)}
+                  />
                 </div>
               </CardContent>
             </Card>

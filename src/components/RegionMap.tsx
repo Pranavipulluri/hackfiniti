@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { 
@@ -17,7 +16,8 @@ import {
   Camera,
   Building,
   Palmtree,
-  Heart
+  Heart,
+  MapIcon
 } from "lucide-react";
 import { Button } from "./ui/button";
 import { Card, CardContent } from "./ui/card";
@@ -381,27 +381,24 @@ const regionData: Record<string, RegionData> = {
 
 interface RegionMapProps {
   initialRegion?: string;
+  onShowItinerary?: () => void;
 }
 
-const RegionMap = ({ initialRegion = "asia" }: RegionMapProps) => {
-  // Navigation state
+const RegionMap = ({ initialRegion = "asia", onShowItinerary }: RegionMapProps) => {
   const [selectedRegion, setSelectedRegion] = useState<string>(initialRegion);
   const [selectedCountry, setSelectedCountry] = useState<CountryData | null>(null);
   const [selectedState, setSelectedState] = useState<StateData | null>(null);
   const [navigationHistory, setNavigationHistory] = useState<string[]>([]);
   const [selectedTab, setSelectedTab] = useState("overview");
 
-  // Reset state when the region changes
   useEffect(() => {
     setSelectedCountry(null);
     setSelectedState(null);
     setNavigationHistory([]);
   }, [selectedRegion]);
 
-  // Get the current region data
   const currentRegionData = regionData[selectedRegion];
   
-  // Handle navigation
   const navigateToCountry = (country: CountryData) => {
     setSelectedCountry(country);
     setSelectedState(null);
@@ -430,7 +427,6 @@ const RegionMap = ({ initialRegion = "asia" }: RegionMapProps) => {
 
   return (
     <div className="space-y-6">
-      {/* Breadcrumb navigation */}
       <div className="flex items-center space-x-2 mb-4">
         <Button
           variant="ghost"
@@ -491,7 +487,6 @@ const RegionMap = ({ initialRegion = "asia" }: RegionMapProps) => {
         )}
       </div>
 
-      {/* Back button (when in country or state view) */}
       {navigationHistory.length > 0 && (
         <Button 
           variant="outline" 
@@ -504,7 +499,6 @@ const RegionMap = ({ initialRegion = "asia" }: RegionMapProps) => {
         </Button>
       )}
 
-      {/* Region Selection Tabs (only show if not in country or state view) */}
       {!selectedCountry && (
         <NavigationMenu className="max-w-full w-full justify-start mb-6">
           <NavigationMenuList className="w-full flex h-auto bg-transparent p-0 overflow-x-auto space-x-2">
@@ -527,10 +521,8 @@ const RegionMap = ({ initialRegion = "asia" }: RegionMapProps) => {
         </NavigationMenu>
       )}
 
-      {/* Region View */}
       {!selectedCountry && !selectedState && (
         <div className="space-y-6">
-          {/* Map Display */}
           <Card className="overflow-hidden border-0 bg-transparent shadow-none">
             <div className="relative h-[400px] rounded-xl overflow-hidden border border-teal-500/30">
               <img 
@@ -545,7 +537,6 @@ const RegionMap = ({ initialRegion = "asia" }: RegionMapProps) => {
             </div>
           </Card>
 
-          {/* Countries in Region */}
           <div>
             <h2 className="text-2xl font-bold mb-4 text-white">Countries in {currentRegionData.name}</h2>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -601,7 +592,6 @@ const RegionMap = ({ initialRegion = "asia" }: RegionMapProps) => {
         </div>
       )}
 
-      {/* Country View */}
       {selectedCountry && !selectedState && (
         <div className="space-y-6">
           <Card className="bg-slate-800/80 border border-teal-500/30 overflow-hidden">
@@ -645,7 +635,6 @@ const RegionMap = ({ initialRegion = "asia" }: RegionMapProps) => {
                 </div>
               </div>
 
-              {/* Map for India */}
               {selectedCountry.id === "india" && (
                 <div className="mb-6">
                   <h3 className="text-lg font-semibold text-white mb-3">States of India</h3>
@@ -662,7 +651,6 @@ const RegionMap = ({ initialRegion = "asia" }: RegionMapProps) => {
                 </div>
               )}
 
-              {/* States List (for India) */}
               {selectedCountry.states && selectedCountry.states.length > 0 && (
                 <div>
                   <h3 className="text-xl font-semibold text-white mb-3">States & Union Territories</h3>
@@ -694,12 +682,11 @@ const RegionMap = ({ initialRegion = "asia" }: RegionMapProps) => {
         </div>
       )}
 
-      {/* State View (Kerala) */}
       {selectedState && (
         <div className="space-y-6">
           <Card className="bg-slate-800/80 border border-teal-500/30 overflow-hidden">
             <CardContent className="p-6">
-              <div className="flex items-center mb-6">
+              <div className="flex items-center justify-between mb-6">
                 <div>
                   <h1 className="text-4xl font-playfair font-bold text-white mb-2">
                     {selectedState.name}
@@ -707,16 +694,37 @@ const RegionMap = ({ initialRegion = "asia" }: RegionMapProps) => {
                   </h1>
                   <p className="text-gray-300 leading-relaxed">{selectedState.description}</p>
                 </div>
-                <div className="hidden md:block">
+                <div className="hidden md:flex items-center gap-2">
                   <img 
                     src="/lovable-uploads/d364c15d-f877-40f4-9df2-cad09b0ec8a2.png" 
                     alt="Kerala Character" 
                     className="h-32 ml-4" 
                   />
+                  {selectedState.id === "kerala" && onShowItinerary && (
+                    <Button 
+                      variant="outline" 
+                      className="flex items-center gap-2 bg-slate-800/60 text-white border-teal-500/30 hover:bg-slate-700/60"
+                      onClick={onShowItinerary}
+                    >
+                      <MapIcon className="h-4 w-4" />
+                      My Itinerary
+                    </Button>
+                  )}
                 </div>
               </div>
               
-              {/* Tabs for Kerala content */}
+              <div className="md:hidden mb-4">
+                {selectedState.id === "kerala" && onShowItinerary && (
+                  <Button 
+                    className="w-full bg-teal-600 hover:bg-teal-700 flex items-center justify-center gap-2"
+                    onClick={onShowItinerary}
+                  >
+                    <MapIcon className="h-4 w-4" />
+                    Explore Kerala Itinerary
+                  </Button>
+                )}
+              </div>
+              
               <Tabs defaultValue="overview" value={selectedTab} onValueChange={setSelectedTab} className="w-full">
                 <TabsList className="bg-slate-700/50 grid w-full grid-cols-2 md:grid-cols-5">
                   <TabsTrigger value="overview" className="data-[state=active]:bg-teal-600">
@@ -741,7 +749,6 @@ const RegionMap = ({ initialRegion = "asia" }: RegionMapProps) => {
                   </TabsTrigger>
                 </TabsList>
                 
-                {/* Overview Tab */}
                 <TabsContent value="overview" className="mt-6">
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                     <Card className="col-span-2 bg-slate-700/30 border-teal-500/20">
@@ -801,7 +808,6 @@ const RegionMap = ({ initialRegion = "asia" }: RegionMapProps) => {
                     </Card>
                   </div>
                   
-                  {/* Kerala Sadya Feature */}
                   <Card className="mt-6 bg-gradient-to-r from-teal-900/40 to-slate-800/60 border border-teal-500/30">
                     <CardContent className="p-6">
                       <div className="flex flex-col md:flex-row gap-6 items-center">
@@ -823,7 +829,6 @@ const RegionMap = ({ initialRegion = "asia" }: RegionMapProps) => {
                   </Card>
                 </TabsContent>
                 
-                {/* Festivals Tab */}
                 <TabsContent value="festivals" className="mt-6">
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                     {selectedState.culturalEvents.map(event => (
@@ -846,7 +851,6 @@ const RegionMap = ({ initialRegion = "asia" }: RegionMapProps) => {
                       </Card>
                     ))}
                     
-                    {/* Additional festival */}
                     <Card className="overflow-hidden bg-slate-700/50 border border-teal-500/20">
                       <div className="h-40 bg-slate-600 relative">
                         <img src="/lovable-uploads/91bf8199-59a4-4e3e-96c1-10cd41b289f1.png" alt="Boat Race" className="w-full h-full object-cover" />
@@ -867,7 +871,6 @@ const RegionMap = ({ initialRegion = "asia" }: RegionMapProps) => {
                   </div>
                 </TabsContent>
                 
-                {/* Arts Tab */}
                 <TabsContent value="arts" className="mt-6">
                   {selectedState.artForms && (
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -888,7 +891,6 @@ const RegionMap = ({ initialRegion = "asia" }: RegionMapProps) => {
                         </Card>
                       ))}
                       
-                      {/* Additional art form */}
                       <Card className="overflow-hidden bg-slate-700/50 border border-teal-500/20">
                         <div className="flex flex-col md:flex-row">
                           <div className="md:w-1/3">
@@ -907,7 +909,6 @@ const RegionMap = ({ initialRegion = "asia" }: RegionMapProps) => {
                   )}
                 </TabsContent>
                 
-                {/* Cuisine Tab */}
                 <TabsContent value="cuisine" className="mt-6">
                   {selectedState.cuisine && (
                     <div className="space-y-6">
@@ -936,7 +937,6 @@ const RegionMap = ({ initialRegion = "asia" }: RegionMapProps) => {
                         ))}
                       </div>
                       
-                      {/* Interactive Sadya Experience */}
                       <Card className="bg-gradient-to-r from-teal-900/40 to-slate-800/60 border border-teal-500/30">
                         <CardContent className="p-6">
                           <h3 className="text-2xl font-bold text-white mb-4">Virtual Sadya Experience</h3>
@@ -956,7 +956,6 @@ const RegionMap = ({ initialRegion = "asia" }: RegionMapProps) => {
                   )}
                 </TabsContent>
                 
-                {/* Landmarks Tab */}
                 <TabsContent value="landmarks" className="mt-6">
                   {selectedState.landmarks && (
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -980,7 +979,6 @@ const RegionMap = ({ initialRegion = "asia" }: RegionMapProps) => {
                         </Card>
                       ))}
                       
-                      {/* Additional landmark */}
                       <Card className="overflow-hidden bg-slate-700/50 border border-teal-500/20">
                         <div className="h-40 bg-slate-600 relative">
                           <img src="/lovable-uploads/9429424e-cfd6-422e-b4d8-94d66c62b618.png" alt="Munnar" className="w-full h-full object-cover" />
