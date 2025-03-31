@@ -1,5 +1,5 @@
-import { useState, useEffect } from "react";
-import { motion } from "framer-motion";
+import { useState, useEffect, useRef } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 import { 
   MapPin, 
   ChevronLeft, 
@@ -17,7 +17,14 @@ import {
   Building,
   Palmtree,
   Heart,
-  MapIcon
+  MapIcon,
+  Users,
+  Home,
+  Sparkles,
+  Waves,
+  Mountain,
+  TreePine,
+  Wind
 } from "lucide-react";
 import { Button } from "./ui/button";
 import { Card, CardContent } from "./ui/card";
@@ -34,6 +41,7 @@ import {
   navigationMenuTriggerStyle,
 } from "@/components/ui/navigation-menu";
 
+// Import custom colored map images
 const regionMapImages = {
   asia: "/lovable-uploads/30e5b83a-25ac-43e1-90d3-80a21f1a319e.png",
   europe: "/lovable-uploads/cbe5bfa0-e4c5-49b1-a687-8151662d21ea.png",
@@ -41,6 +49,10 @@ const regionMapImages = {
   americas: "/lovable-uploads/fb03e8d4-7a19-44d4-9fc3-9dd04a6476f8.png",
   oceania: "/lovable-uploads/ca30d5b2-84a6-4e29-94f7-6ba0499996c1.png",
   india: "/lovable-uploads/81342f88-cc2b-47e3-867e-b10f1e059c2c.png",
+  // Use pixelated custom map images provided by the user
+  custom_kerala: "/lovable-uploads/1f104cbb-67b3-4754-a071-d0c178ce0177.png",
+  custom_world: "/lovable-uploads/967ab145-1ae8-4e98-9e6a-b690373881f1.png",
+  custom_fantasy: "/lovable-uploads/141a3eed-d5dc-4e0d-933d-b9dcf29c3f90.png"
 };
 
 export type RegionData = {
@@ -382,19 +394,33 @@ const regionData: Record<string, RegionData> = {
 interface RegionMapProps {
   initialRegion?: string;
   onShowItinerary?: () => void;
+  onShowCommunityHub?: () => void;
+  colorfulMap?: boolean;
 }
 
-const RegionMap = ({ initialRegion = "asia", onShowItinerary }: RegionMapProps) => {
+const RegionMap = ({ 
+  initialRegion = "asia", 
+  onShowItinerary, 
+  onShowCommunityHub,
+  colorfulMap = false 
+}: RegionMapProps) => {
   const [selectedRegion, setSelectedRegion] = useState<string>(initialRegion);
   const [selectedCountry, setSelectedCountry] = useState<CountryData | null>(null);
   const [selectedState, setSelectedState] = useState<StateData | null>(null);
   const [navigationHistory, setNavigationHistory] = useState<string[]>([]);
   const [selectedTab, setSelectedTab] = useState("overview");
+  const [zoomEffect, setZoomEffect] = useState(false);
+  const [focusedLocation, setFocusedLocation] = useState<{x: number, y: number} | null>(null);
+  const [activeHotspot, setActiveHotspot] = useState<number | null>(null);
+  
+  const mapRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     setSelectedCountry(null);
     setSelectedState(null);
     setNavigationHistory([]);
+    setZoomEffect(false);
+    setFocusedLocation(null);
   }, [selectedRegion]);
 
   const currentRegionData = regionData[selectedRegion];
@@ -404,12 +430,24 @@ const RegionMap = ({ initialRegion = "asia", onShowItinerary }: RegionMapProps) 
     setSelectedState(null);
     setNavigationHistory([...navigationHistory, 'region']);
     setSelectedTab("overview");
+    setZoomEffect(true);
+    
+    // Reset after animation completes
+    setTimeout(() => {
+      setZoomEffect(false);
+    }, 1000);
   };
   
   const navigateToState = (state: StateData) => {
     setSelectedState(state);
     setNavigationHistory([...navigationHistory, 'country']);
     setSelectedTab("overview");
+    setZoomEffect(true);
+    
+    // Reset after animation completes
+    setTimeout(() => {
+      setZoomEffect(false);
+    }, 1000);
   };
   
   const navigateBack = () => {
@@ -423,7 +461,64 @@ const RegionMap = ({ initialRegion = "asia", onShowItinerary }: RegionMapProps) 
       setNavigationHistory([]);
     }
     setSelectedTab("overview");
+    setZoomEffect(true);
+    
+    // Reset after animation completes
+    setTimeout(() => {
+      setZoomEffect(false);
+    }, 1000);
   };
+
+  // Animated elements for the map
+  const AnimatedWaves = () => {
+    return (
+      <motion.div 
+        className="absolute left-0 right-0 top-[30%] flex space-x-16 opacity-70 pointer-events-none"
+        animate={{ x: [0, 10, 0] }}
+        transition={{ repeat: Infinity, duration: 3, ease: "easeInOut" }}
+      >
+        <Waves className="h-6 w-6 text-blue-300" />
+        <Waves className="h-5 w-5 text-blue-400" />
+        <Waves className="h-7 w-7 text-blue-200" />
+      </motion.div>
+    );
+  };
+
+  const AnimatedTrees = () => {
+    return (
+      <motion.div 
+        className="absolute left-[20%] top-[40%] flex space-x-8 opacity-70 pointer-events-none"
+        animate={{ rotate: [-1, 1, -1] }}
+        transition={{ repeat: Infinity, duration: 2, ease: "easeInOut" }}
+      >
+        <TreePine className="h-6 w-6 text-green-400" />
+        <TreePine className="h-5 w-5 text-green-500" />
+        <TreePine className="h-7 w-7 text-green-300" />
+      </motion.div>
+    );
+  };
+
+  const AnimatedWind = () => {
+    return (
+      <motion.div 
+        className="absolute right-[20%] top-[20%] opacity-50 pointer-events-none"
+        animate={{ x: [-5, 5, -5], opacity: [0.3, 0.6, 0.3] }}
+        transition={{ repeat: Infinity, duration: 4, ease: "easeInOut" }}
+      >
+        <Wind className="h-8 w-8 text-blue-200" />
+      </motion.div>
+    );
+  };
+
+  // Kerala map hotspots
+  const keralaHotspots = [
+    { id: 1, name: "Fort Kochi", x: 20, y: 30, icon: Building },
+    { id: 2, name: "Alleppey Backwaters", x: 40, y: 50, icon: Waves },
+    { id: 3, name: "Munnar Tea Gardens", x: 70, y: 25, icon: Palmtree },
+    { id: 4, name: "Thekkady Wildlife", x: 65, y: 40, icon: TreePine },
+    { id: 5, name: "Kovalam Beach", x: 30, y: 80, icon: Waves },
+    { id: 6, name: "Community Hub", x: 50, y: 50, icon: Users },
+  ];
 
   return (
     <div className="space-y-6">
@@ -524,12 +619,63 @@ const RegionMap = ({ initialRegion = "asia", onShowItinerary }: RegionMapProps) 
       {!selectedCountry && !selectedState && (
         <div className="space-y-6">
           <Card className="overflow-hidden border-0 bg-transparent shadow-none">
-            <div className="relative h-[400px] rounded-xl overflow-hidden border border-teal-500/30">
-              <img 
-                src={regionMapImages[selectedRegion]} 
+            <div className="relative h-[450px] rounded-xl overflow-hidden border border-teal-500/30" ref={mapRef}>
+              <motion.img 
+                src={colorfulMap ? regionMapImages.custom_world : regionMapImages[selectedRegion]} 
                 alt={`Map of ${currentRegionData.name}`}
                 className="w-full h-full object-cover"
+                initial={{ scale: zoomEffect ? 1.2 : 1 }}
+                animate={{ scale: zoomEffect ? 1 : 1 }}
+                transition={{ duration: 1, ease: "easeInOut" }}
               />
+              
+              {/* Animated map elements */}
+              {colorfulMap && (
+                <>
+                  <AnimatedWaves />
+                  <AnimatedTrees />
+                  <AnimatedWind />
+                  
+                  {/* Interactive map points */}
+                  <div className="absolute inset-0">
+                    {currentRegionData.countries.map((country, index) => (
+                      <motion.div
+                        key={country.id}
+                        className="absolute cursor-pointer"
+                        style={{ 
+                          left: `${20 + (index * 15)}%`, 
+                          top: `${30 + (index * 10)}%` 
+                        }}
+                        whileHover={{ scale: 1.2 }}
+                        onClick={() => navigateToCountry(country)}
+                      >
+                        <motion.div
+                          className="w-8 h-8 rounded-full bg-teal-500/80 flex items-center justify-center text-white shadow-lg"
+                          animate={{ 
+                            scale: [1, 1.1, 1],
+                            boxShadow: [
+                              "0 0 0 0 rgba(45, 212, 191, 0.7)",
+                              "0 0 0 10px rgba(45, 212, 191, 0)",
+                              "0 0 0 0 rgba(45, 212, 191, 0)"
+                            ]
+                          }}
+                          transition={{ 
+                            repeat: Infinity, 
+                            duration: 2,
+                            ease: "easeInOut"
+                          }}
+                        >
+                          <Flag className="h-4 w-4" />
+                        </motion.div>
+                        <div className="absolute top-full left-1/2 transform -translate-x-1/2 mt-1 bg-black/70 text-white text-xs py-1 px-2 rounded whitespace-nowrap">
+                          {country.name}
+                        </div>
+                      </motion.div>
+                    ))}
+                  </div>
+                </>
+              )}
+              
               <div className="absolute bottom-4 left-4 bg-black/60 backdrop-blur-sm rounded-lg p-3 text-white text-sm">
                 <h3 className="font-bold text-teal-400">{currentRegionData.name}</h3>
                 <p className="text-xs text-gray-300">Click on countries to explore their culture</p>
@@ -700,20 +846,32 @@ const RegionMap = ({ initialRegion = "asia", onShowItinerary }: RegionMapProps) 
                     alt="Kerala Character" 
                     className="h-32 ml-4" 
                   />
-                  {selectedState.id === "kerala" && onShowItinerary && (
-                    <Button 
-                      variant="outline" 
-                      className="flex items-center gap-2 bg-slate-800/60 text-white border-teal-500/30 hover:bg-slate-700/60"
-                      onClick={onShowItinerary}
-                    >
-                      <MapIcon className="h-4 w-4" />
-                      My Itinerary
-                    </Button>
-                  )}
+                  <div className="flex flex-col gap-2">
+                    {selectedState.id === "kerala" && onShowItinerary && (
+                      <Button 
+                        variant="outline" 
+                        className="flex items-center gap-2 bg-slate-800/60 text-white border-teal-500/30 hover:bg-slate-700/60"
+                        onClick={onShowItinerary}
+                      >
+                        <MapIcon className="h-4 w-4" />
+                        My Itinerary
+                      </Button>
+                    )}
+                    {selectedState.id === "kerala" && onShowCommunityHub && (
+                      <Button 
+                        variant="default" 
+                        className="flex items-center gap-2 bg-teal-600 hover:bg-teal-700"
+                        onClick={onShowCommunityHub}
+                      >
+                        <Users className="h-4 w-4" />
+                        Community Hub
+                      </Button>
+                    )}
+                  </div>
                 </div>
               </div>
               
-              <div className="md:hidden mb-4">
+              <div className="md:hidden mb-4 flex flex-col gap-2">
                 {selectedState.id === "kerala" && onShowItinerary && (
                   <Button 
                     className="w-full bg-teal-600 hover:bg-teal-700 flex items-center justify-center gap-2"
@@ -723,7 +881,139 @@ const RegionMap = ({ initialRegion = "asia", onShowItinerary }: RegionMapProps) 
                     Explore Kerala Itinerary
                   </Button>
                 )}
+                {selectedState.id === "kerala" && onShowCommunityHub && (
+                  <Button 
+                    className="w-full bg-purple-600 hover:bg-purple-700 flex items-center justify-center gap-2"
+                    onClick={onShowCommunityHub}
+                  >
+                    <Users className="h-4 w-4" />
+                    Open Community Hub
+                  </Button>
+                )}
               </div>
+              
+              {/* Interactive Kerala Map */}
+              {selectedState.id === "kerala" && (
+                <div className="relative h-[400px] rounded-xl overflow-hidden border border-teal-500/30 mb-6">
+                  <motion.img 
+                    src={regionMapImages.custom_kerala}
+                    alt="Interactive Kerala Map"
+                    className="w-full h-full object-cover"
+                    initial={{ scale: zoomEffect ? 1.2 : 1 }}
+                    animate={{ 
+                      scale: focusedLocation ? 1.2 : 1,
+                      x: focusedLocation ? -focusedLocation.x * 5 : 0,
+                      y: focusedLocation ? -focusedLocation.y * 3 : 0
+                    }}
+                    transition={{ duration: 0.8, ease: "easeInOut" }}
+                  />
+                  
+                  {/* Hotspots on map */}
+                  {keralaHotspots.map((hotspot) => {
+                    const isHub = hotspot.id === 6; // Community Hub
+                    const IconComponent = hotspot.icon;
+                    
+                    return (
+                      <motion.div
+                        key={hotspot.id}
+                        className={`absolute cursor-pointer`}
+                        style={{ 
+                          left: `${hotspot.x}%`, 
+                          top: `${hotspot.y}%`,
+                          zIndex: isHub ? 10 : 5
+                        }}
+                        whileHover={{ scale: 1.2 }}
+                        animate={activeHotspot === hotspot.id ? { scale: [1, 1.2, 1] } : {}}
+                        transition={{ duration: 0.5, repeat: activeHotspot === hotspot.id ? Infinity : 0 }}
+                        onMouseEnter={() => setActiveHotspot(hotspot.id)}
+                        onMouseLeave={() => setActiveHotspot(null)}
+                        onClick={() => {
+                          if (isHub && onShowCommunityHub) {
+                            onShowCommunityHub();
+                          } else {
+                            setFocusedLocation(
+                              focusedLocation ? null : { x: hotspot.x - 50, y: hotspot.y - 50 }
+                            );
+                          }
+                        }}
+                      >
+                        <motion.div
+                          className={`w-10 h-10 rounded-full flex items-center justify-center shadow-lg ${
+                            isHub ? 'bg-purple-500/90 text-white' : 'bg-teal-500/80 text-white'
+                          }`}
+                          animate={
+                            isHub 
+                              ? { 
+                                  scale: [1, 1.1, 1],
+                                  boxShadow: [
+                                    "0 0 0 0 rgba(168, 85, 247, 0.7)",
+                                    "0 0 0 10px rgba(168, 85, 247, 0)",
+                                    "0 0 0 0 rgba(168, 85, 247, 0)"
+                                  ] 
+                                }
+                              : { 
+                                  scale: [1, 1.05, 1],
+                                  boxShadow: [
+                                    "0 0 0 0 rgba(45, 212, 191, 0.7)",
+                                    "0 0 0 6px rgba(45, 212, 191, 0)",
+                                    "0 0 0 0 rgba(45, 212, 191, 0)"
+                                  ] 
+                                }
+                          }
+                          transition={{ 
+                            repeat: Infinity, 
+                            duration: isHub ? 2.5 : 2,
+                            ease: "easeInOut"
+                          }}
+                        >
+                          <IconComponent className={`h-5 w-5 ${isHub ? 'animate-pulse' : ''}`} />
+                        </motion.div>
+                        
+                        <AnimatePresence>
+                          {(activeHotspot === hotspot.id || focusedLocation) && (
+                            <motion.div 
+                              initial={{ opacity: 0, y: 10 }}
+                              animate={{ opacity: 1, y: 0 }}
+                              exit={{ opacity: 0, y: 10 }}
+                              className={`absolute top-full left-1/2 transform -translate-x-1/2 mt-1 py-1 px-3 rounded whitespace-nowrap z-20 ${
+                                isHub 
+                                  ? 'bg-purple-900/90 text-white border border-purple-500/50' 
+                                  : 'bg-black/70 text-white'
+                              }`}
+                            >
+                              {isHub ? (
+                                <div className="flex items-center gap-1">
+                                  <Sparkles className="h-3 w-3 text-purple-300" />
+                                  <span>{hotspot.name}</span>
+                                </div>
+                              ) : (
+                                <span>{hotspot.name}</span>
+                              )}
+                            </motion.div>
+                          )}
+                        </AnimatePresence>
+                      </motion.div>
+                    );
+                  })}
+                  
+                  {/* Reset zoom button */}
+                  {focusedLocation && (
+                    <motion.div
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      className="absolute top-4 right-4"
+                    >
+                      <Button 
+                        size="sm" 
+                        onClick={() => setFocusedLocation(null)}
+                        className="bg-black/70 hover:bg-black/90"
+                      >
+                        <Home className="h-4 w-4 mr-1" /> Reset View
+                      </Button>
+                    </motion.div>
+                  )}
+                </div>
+              )}
               
               <Tabs defaultValue="overview" value={selectedTab} onValueChange={setSelectedTab} className="w-full">
                 <TabsList className="bg-slate-700/50 grid w-full grid-cols-2 md:grid-cols-5">
