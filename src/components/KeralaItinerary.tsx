@@ -1,8 +1,8 @@
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, MapPin, TreePalm, Image, Gamepad } from "lucide-react";
-import { motion } from "framer-motion";
+import { ArrowLeft, MapPin, TreePalm, Image, Gamepad, Waves } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "sonner";
 
 // Define map tiles and landmarks
@@ -154,6 +154,36 @@ const KeralaItinerary = () => {
   const [activeGame, setActiveGame] = useState<typeof miniGames[0] | null>(null);
   const [showInstructions, setShowInstructions] = useState(true);
   const [playingGame, setPlayingGame] = useState(false);
+  const [hoveredLandmark, setHoveredLandmark] = useState<number | null>(null);
+  const [animationFrameId, setAnimationFrameId] = useState<number | null>(null);
+  const [waveOffset, setWaveOffset] = useState(0);
+  const [treeSwayAngle, setTreeSwayAngle] = useState(0);
+  
+  const mapContainerRef = useRef<HTMLDivElement>(null);
+
+  // Animation loop for environmental elements
+  useEffect(() => {
+    let frameId: number;
+    
+    const animate = () => {
+      // Update water wave position
+      setWaveOffset(prev => (prev + 0.05) % 10);
+      
+      // Update tree sway
+      setTreeSwayAngle(Math.sin(Date.now() / 1000) * 5);
+      
+      frameId = requestAnimationFrame(animate);
+    };
+    
+    frameId = requestAnimationFrame(animate);
+    setAnimationFrameId(frameId);
+    
+    return () => {
+      if (frameId) {
+        cancelAnimationFrame(frameId);
+      }
+    };
+  }, []);
 
   const movePlayer = useCallback((dx: number, dy: number) => {
     setPlayerPosition(prev => {
@@ -224,6 +254,18 @@ const KeralaItinerary = () => {
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [movePlayer, playingGame]);
 
+  // Function to zoom to a landmark
+  const zoomToLandmark = (landmark: typeof landmarks[0]) => {
+    if (!mapContainerRef.current) return;
+    
+    // Highlight the landmark
+    setHoveredLandmark(landmark.id);
+    
+    // Show info about the landmark
+    setActiveLandmark(landmark);
+    setActiveGame(null);
+  };
+
   // Start a mini-game
   const startGame = () => {
     if (activeGame) {
@@ -240,6 +282,9 @@ const KeralaItinerary = () => {
 
   // Render tile based on type
   const renderTile = (type: TileType, x: number, y: number) => {
+    const isLandmarkHovered = type === TileType.LANDMARK && 
+      hoveredLandmark === landmarks.find(l => l.x === x && l.y === y)?.id;
+
     switch (type) {
       case TileType.GRASS:
         return (
@@ -269,16 +314,24 @@ const KeralaItinerary = () => {
         );
       case TileType.WATER:
         return (
-          <div 
+          <motion.div 
             key={`tile-${x}-${y}`} 
-            className="absolute bg-blue-500" 
+            className="absolute bg-blue-500 overflow-hidden" 
             style={{ 
               width: TILE_SIZE, 
               height: TILE_SIZE, 
               left: x * TILE_SIZE, 
               top: y * TILE_SIZE 
             }}
-          />
+          >
+            {/* Animated waves */}
+            <motion.div 
+              className="absolute inset-0 flex items-center justify-center"
+              style={{ y: waveOffset }}
+            >
+              <Waves className="text-blue-300 opacity-70" />
+            </motion.div>
+          </motion.div>
         );
       case TileType.TREE:
         return (
@@ -293,30 +346,50 @@ const KeralaItinerary = () => {
             }}
           >
             <div className="w-full h-2/3 bg-green-800 rounded-full absolute bottom-0 flex items-center justify-center">
-              <TreePalm className="w-5 h-5 text-green-200" />
+              <motion.div
+                style={{ rotate: treeSwayAngle }}
+                transition={{ type: "spring", stiffness: 100 }}
+              >
+                <TreePalm className="w-5 h-5 text-green-200" />
+              </motion.div>
             </div>
           </div>
         );
       case TileType.LANDMARK:
         const landmark = landmarks.find(l => l.x === x && l.y === y);
         return (
-          <div 
+          <motion.div 
             key={`tile-${x}-${y}`} 
-            className="absolute" 
+            className="absolute cursor-pointer" 
             style={{ 
               width: TILE_SIZE, 
               height: TILE_SIZE, 
               left: x * TILE_SIZE, 
-              top: y * TILE_SIZE 
+              top: y * TILE_SIZE,
+              zIndex: isLandmarkHovered ? 10 : 1
             }}
+            whileHover={{ scale: 1.2 }}
+            onHoverStart={() => setHoveredLandmark(landmark?.id || null)}
+            onHoverEnd={() => setHoveredLandmark(null)}
+            onClick={() => landmark && zoomToLandmark(landmark)}
           >
-            <div className="w-full h-full bg-amber-300" />
+            <motion.div 
+              className="w-full h-full bg-amber-300"
+              animate={{ opacity: [0.7, 1, 0.7] }}
+              transition={{ repeat: Infinity, duration: 2 }}
+            />
             <div className="absolute inset-0 flex items-center justify-center">
-              <div className="w-3/4 h-3/4 bg-red-500 rounded-full flex items-center justify-center text-white text-xs font-bold animate-pulse">
+              <motion.div 
+                className={`w-3/4 h-3/4 bg-red-500 rounded-full flex items-center justify-center text-white text-xs font-bold ${isLandmarkHovered ? 'z-20' : ''}`}
+                animate={{ 
+                  scale: isLandmarkHovered ? [1.1, 1.3, 1.1] : [1, 1.2, 1],
+                }}
+                transition={{ repeat: Infinity, duration: 1.5 }}
+              >
                 <MapPin className="w-4 h-4" />
-              </div>
+              </motion.div>
             </div>
-          </div>
+          </motion.div>
         );
       case TileType.BUILDING:
         return (
@@ -330,10 +403,17 @@ const KeralaItinerary = () => {
               top: y * TILE_SIZE 
             }}
           >
-            <div className="w-full h-3/4 bg-gray-700 absolute bottom-0 flex items-center justify-center">
+            <div className="w-full h-3/4 bg-gray-700 absolute bottom-0 flex items-center justify-center shadow-md">
               <Image className="w-4 h-4 text-gray-300" />
             </div>
             <div className="w-full h-1/4 bg-red-800 absolute top-0 transform -translate-y-1/4" />
+            {/* Windows */}
+            <div className="absolute inset-0 grid grid-cols-2 gap-0.5 p-1 pt-2">
+              <div className="bg-yellow-100 opacity-60 rounded-sm h-2"></div>
+              <div className="bg-yellow-100 opacity-60 rounded-sm h-2"></div>
+              <div className="bg-yellow-100 opacity-60 rounded-sm h-2"></div>
+              <div className="bg-yellow-100 opacity-60 rounded-sm h-2"></div>
+            </div>
           </div>
         );
       case TileType.TEA_FIELD:
@@ -350,10 +430,26 @@ const KeralaItinerary = () => {
           >
             <div className="absolute inset-0 flex items-center justify-center">
               <div className="grid grid-cols-2 gap-1 w-full h-full p-1">
-                <div className="bg-green-500 rounded-sm"></div>
-                <div className="bg-green-600 rounded-sm"></div>
-                <div className="bg-green-600 rounded-sm"></div>
-                <div className="bg-green-500 rounded-sm"></div>
+                <motion.div 
+                  className="bg-green-500 rounded-sm"
+                  animate={{ y: [0, -1, 0] }}
+                  transition={{ repeat: Infinity, duration: 2, delay: 0.2 }}
+                ></motion.div>
+                <motion.div 
+                  className="bg-green-600 rounded-sm"
+                  animate={{ y: [0, -1, 0] }}
+                  transition={{ repeat: Infinity, duration: 2, delay: 0.4 }}
+                ></motion.div>
+                <motion.div 
+                  className="bg-green-600 rounded-sm"
+                  animate={{ y: [0, -1, 0] }}
+                  transition={{ repeat: Infinity, duration: 2, delay: 0.3 }}
+                ></motion.div>
+                <motion.div 
+                  className="bg-green-500 rounded-sm"
+                  animate={{ y: [0, -1, 0] }}
+                  transition={{ repeat: Infinity, duration: 2, delay: 0.5 }}
+                ></motion.div>
               </div>
             </div>
           </div>
@@ -361,23 +457,34 @@ const KeralaItinerary = () => {
       case TileType.MINIGAME:
         const game = miniGames.find(g => g.x === x && g.y === y);
         return (
-          <div 
+          <motion.div 
             key={`tile-${x}-${y}`} 
-            className="absolute" 
+            className="absolute cursor-pointer" 
             style={{ 
               width: TILE_SIZE, 
               height: TILE_SIZE, 
               left: x * TILE_SIZE, 
               top: y * TILE_SIZE 
             }}
+            whileHover={{ scale: 1.2, zIndex: 10 }}
           >
-            <div className="w-full h-full bg-purple-400" />
+            <motion.div 
+              className="w-full h-full bg-purple-400"
+              animate={{ 
+                backgroundColor: ["#c084fc", "#a855f7", "#c084fc"]
+              }}
+              transition={{ repeat: Infinity, duration: 2 }}
+            />
             <div className="absolute inset-0 flex items-center justify-center">
-              <div className="w-3/4 h-3/4 bg-purple-600 rounded-lg flex items-center justify-center text-white text-xs font-bold animate-pulse">
+              <motion.div 
+                className="w-3/4 h-3/4 bg-purple-600 rounded-lg flex items-center justify-center text-white text-xs font-bold"
+                animate={{ rotate: [0, 5, -5, 0] }}
+                transition={{ repeat: Infinity, duration: 2 }}
+              >
                 <Gamepad className="w-4 h-4" />
-              </div>
+              </motion.div>
             </div>
-          </div>
+          </motion.div>
         );
       default:
         return null;
@@ -390,7 +497,7 @@ const KeralaItinerary = () => {
       <div className="col-start-2">
         <Button 
           onClick={() => movePlayer(0, -1)}
-          className="w-12 h-12 bg-slate-700/70 rounded-full p-0"
+          className="w-12 h-12 bg-slate-700/70 hover:bg-slate-600/70 rounded-full p-0"
           disabled={playingGame}
         >
           ↑
@@ -399,7 +506,7 @@ const KeralaItinerary = () => {
       <div className="col-start-1 row-start-2">
         <Button 
           onClick={() => movePlayer(-1, 0)}
-          className="w-12 h-12 bg-slate-700/70 rounded-full p-0"
+          className="w-12 h-12 bg-slate-700/70 hover:bg-slate-600/70 rounded-full p-0"
           disabled={playingGame}
         >
           ←
@@ -408,7 +515,7 @@ const KeralaItinerary = () => {
       <div className="col-start-3 row-start-2">
         <Button 
           onClick={() => movePlayer(1, 0)}
-          className="w-12 h-12 bg-slate-700/70 rounded-full p-0"
+          className="w-12 h-12 bg-slate-700/70 hover:bg-slate-600/70 rounded-full p-0"
           disabled={playingGame}
         >
           →
@@ -417,7 +524,7 @@ const KeralaItinerary = () => {
       <div className="col-start-2 row-start-3">
         <Button 
           onClick={() => movePlayer(0, 1)}
-          className="w-12 h-12 bg-slate-700/70 rounded-full p-0"
+          className="w-12 h-12 bg-slate-700/70 hover:bg-slate-600/70 rounded-full p-0"
           disabled={playingGame}
         >
           ↓
@@ -432,36 +539,61 @@ const KeralaItinerary = () => {
     
     if (activeGame.id === 1) { // Kerala Quiz
       return (
-        <div className="p-4 bg-slate-800 rounded-lg">
+        <motion.div 
+          className="p-4 bg-slate-800 rounded-lg"
+          initial={{ opacity: 0, scale: 0.9 }}
+          animate={{ opacity: 1, scale: 1 }}
+          exit={{ opacity: 0, scale: 0.9 }}
+          transition={{ type: "spring", stiffness: 300, damping: 25 }}
+        >
           <h3 className="text-xl font-bold text-white mb-4">Kerala Quiz</h3>
           <p className="text-gray-300 mb-4">What is Kerala often referred to as?</p>
           <div className="grid grid-cols-1 gap-2">
-            <Button onClick={endGame}>A) Land of Temples</Button>
-            <Button onClick={endGame}>B) God's Own Country</Button>
-            <Button onClick={endGame}>C) Spice Garden of India</Button>
-            <Button onClick={endGame}>D) Paradise on Earth</Button>
+            <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
+              <Button onClick={endGame} className="w-full justify-start">A) Land of Temples</Button>
+            </motion.div>
+            <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
+              <Button onClick={endGame} className="w-full justify-start">B) God's Own Country</Button>
+            </motion.div>
+            <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
+              <Button onClick={endGame} className="w-full justify-start">C) Spice Garden of India</Button>
+            </motion.div>
+            <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
+              <Button onClick={endGame} className="w-full justify-start">D) Paradise on Earth</Button>
+            </motion.div>
           </div>
-        </div>
+        </motion.div>
       );
     }
     
     if (activeGame.id === 2) { // Memory Match
       return (
-        <div className="p-4 bg-slate-800 rounded-lg">
+        <motion.div 
+          className="p-4 bg-slate-800 rounded-lg"
+          initial={{ opacity: 0, scale: 0.9 }}
+          animate={{ opacity: 1, scale: 1 }}
+          exit={{ opacity: 0, scale: 0.9 }}
+          transition={{ type: "spring", stiffness: 300, damping: 25 }}
+        >
           <h3 className="text-xl font-bold text-white mb-4">Memory Match</h3>
           <div className="grid grid-cols-3 gap-2">
             {Array(9).fill(0).map((_, i) => (
-              <Button 
-                key={i} 
-                variant="outline"
-                className="h-16 bg-slate-700 hover:bg-slate-600"
-                onClick={endGame}
+              <motion.div
+                key={i}
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
               >
-                ?
-              </Button>
+                <Button 
+                  variant="outline"
+                  className="h-16 bg-slate-700 hover:bg-slate-600"
+                  onClick={endGame}
+                >
+                  ?
+                </Button>
+              </motion.div>
             ))}
           </div>
-        </div>
+        </motion.div>
       );
     }
     
@@ -513,98 +645,178 @@ const KeralaItinerary = () => {
         </motion.div>
       )}
 
-      {playingGame ? (
-        <div className="mt-4">
-          {renderMiniGame()}
-        </div>
-      ) : (
-        <div className="relative bg-green-800 rounded-lg overflow-hidden shadow-xl border border-teal-900/50" 
-          style={{ width: MAP_WIDTH * TILE_SIZE, height: MAP_HEIGHT * TILE_SIZE }}>
-          {/* Render map tiles */}
-          {map.map((row, y) => 
-            row.map((tile, x) => renderTile(tile, x, y))
-          )}
-          
-          {/* Player character */}
+      <AnimatePresence mode="wait">
+        {playingGame ? (
           <motion.div 
-            className="absolute z-10 flex items-center justify-center"
-            style={getCharacterStyle()}
-            initial={{ scale: 0 }}
-            animate={{ scale: 1 }}
-            transition={{ type: "spring", stiffness: 500, damping: 30 }}
+            key="game-mode"
+            className="mt-4"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 20 }}
+            transition={{ duration: 0.3 }}
           >
-            <div className="w-3/4 h-3/4 bg-yellow-500 rounded-full relative overflow-hidden">
-              {/* Simple face */}
-              <div className="absolute top-1/4 left-1/4 w-1/6 h-1/6 bg-black rounded-full" />
-              <div className="absolute top-1/4 right-1/4 w-1/6 h-1/6 bg-black rounded-full" />
-              {playerDirection === Direction.UP && 
-                <div className="absolute top-1/2 left-[40%] w-1/5 h-1/10 bg-black rounded-full" />
-              }
-              {playerDirection === Direction.DOWN && 
-                <div className="absolute top-[60%] left-[40%] w-1/5 h-1/10 bg-black rounded-full transform rotate-180" />
-              }
-              {playerDirection === Direction.LEFT && 
-                <div className="absolute top-[45%] left-[30%] w-1/5 h-1/10 bg-black rounded-full" />
-              }
-              {playerDirection === Direction.RIGHT && 
-                <div className="absolute top-[45%] right-[30%] w-1/5 h-1/10 bg-black rounded-full" />
-              }
+            {renderMiniGame()}
+          </motion.div>
+        ) : (
+          <motion.div
+            key="map-mode"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+          >
+            <div 
+              ref={mapContainerRef}
+              className="relative bg-green-800 rounded-lg overflow-hidden shadow-xl border border-teal-900/50" 
+              style={{ width: MAP_WIDTH * TILE_SIZE, height: MAP_HEIGHT * TILE_SIZE }}
+            >
+              {/* Render map tiles */}
+              {map.map((row, y) => 
+                row.map((tile, x) => renderTile(tile, x, y))
+              )}
+              
+              {/* Player character */}
+              <motion.div 
+                className="absolute z-10 flex items-center justify-center"
+                style={getCharacterStyle()}
+                initial={{ scale: 0 }}
+                animate={{ scale: 1 }}
+                transition={{ type: "spring", stiffness: 500, damping: 30 }}
+              >
+                <motion.div 
+                  className="w-3/4 h-3/4 bg-yellow-500 rounded-full relative overflow-hidden"
+                  animate={{ y: [0, -2, 0] }}
+                  transition={{ repeat: Infinity, duration: 1 }}
+                >
+                  {/* Simple face */}
+                  <div className="absolute top-1/4 left-1/4 w-1/6 h-1/6 bg-black rounded-full" />
+                  <div className="absolute top-1/4 right-1/4 w-1/6 h-1/6 bg-black rounded-full" />
+                  {playerDirection === Direction.UP && 
+                    <div className="absolute top-1/2 left-[40%] w-1/5 h-1/10 bg-black rounded-full" />
+                  }
+                  {playerDirection === Direction.DOWN && 
+                    <div className="absolute top-[60%] left-[40%] w-1/5 h-1/10 bg-black rounded-full transform rotate-180" />
+                  }
+                  {playerDirection === Direction.LEFT && 
+                    <div className="absolute top-[45%] left-[30%] w-1/5 h-1/10 bg-black rounded-full" />
+                  }
+                  {playerDirection === Direction.RIGHT && 
+                    <div className="absolute top-[45%] right-[30%] w-1/5 h-1/10 bg-black rounded-full" />
+                  }
+                </motion.div>
+              </motion.div>
             </div>
           </motion.div>
-        </div>
-      )}
+        )}
+      </AnimatePresence>
       
       {/* Landmark information */}
-      {activeLandmark && !playingGame && (
-        <motion.div 
-          className="mt-4 bg-slate-800/90 backdrop-blur-sm p-4 rounded-lg text-white"
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-        >
-          <div className="flex flex-col md:flex-row items-start gap-4">
-            {activeLandmark.image && (
-              <img 
-                src={activeLandmark.image} 
-                alt={activeLandmark.name} 
-                className="w-full md:w-40 h-32 object-cover rounded-lg"
-              />
-            )}
-            <div>
-              <h3 className="text-xl font-bold mb-1 flex items-center gap-2">
-                <MapPin className="h-5 w-5 text-red-500" />
-                {activeLandmark.name}
-              </h3>
-              <p className="text-gray-300">{activeLandmark.description}</p>
+      <AnimatePresence>
+        {activeLandmark && !playingGame && (
+          <motion.div 
+            key={`landmark-${activeLandmark.id}`}
+            className="mt-4 bg-slate-800/90 backdrop-blur-sm p-4 rounded-lg text-white"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 20 }}
+            transition={{ type: "spring", stiffness: 300, damping: 30 }}
+          >
+            <div className="flex flex-col md:flex-row items-start gap-4">
+              {activeLandmark.image && (
+                <motion.img 
+                  src={activeLandmark.image} 
+                  alt={activeLandmark.name} 
+                  className="w-full md:w-40 h-32 object-cover rounded-lg"
+                  initial={{ scale: 0.95, opacity: 0.8 }}
+                  animate={{ scale: 1, opacity: 1 }}
+                  transition={{ duration: 0.3 }}
+                />
+              )}
+              <div>
+                <motion.h3 
+                  className="text-xl font-bold mb-1 flex items-center gap-2"
+                  initial={{ x: -10, opacity: 0 }}
+                  animate={{ x: 0, opacity: 1 }}
+                  transition={{ delay: 0.1 }}
+                >
+                  <MapPin className="h-5 w-5 text-red-500" />
+                  {activeLandmark.name}
+                </motion.h3>
+                <motion.p 
+                  className="text-gray-300"
+                  initial={{ x: -10, opacity: 0 }}
+                  animate={{ x: 0, opacity: 1 }}
+                  transition={{ delay: 0.2 }}
+                >
+                  {activeLandmark.description}
+                </motion.p>
+              </div>
             </div>
-          </div>
-        </motion.div>
-      )}
+          </motion.div>
+        )}
+      </AnimatePresence>
       
       {/* Mini-game information */}
-      {activeGame && !playingGame && (
-        <motion.div 
-          className="mt-4 bg-slate-800/90 backdrop-blur-sm p-4 rounded-lg text-white"
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-        >
-          <div className="flex items-start gap-3">
-            <div className="bg-purple-500 rounded-full w-10 h-10 flex items-center justify-center flex-shrink-0">
-              <Gamepad className="h-5 w-5 text-white" />
+      <AnimatePresence>
+        {activeGame && !playingGame && (
+          <motion.div 
+            key={`game-${activeGame.id}`}
+            className="mt-4 bg-slate-800/90 backdrop-blur-sm p-4 rounded-lg text-white"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 20 }}
+            transition={{ type: "spring", stiffness: 300, damping: 30 }}
+          >
+            <div className="flex items-start gap-3">
+              <motion.div 
+                className="bg-purple-500 rounded-full w-10 h-10 flex items-center justify-center flex-shrink-0"
+                initial={{ rotate: -10, scale: 0.9 }}
+                animate={{ rotate: 0, scale: 1 }}
+                transition={{ type: "spring", stiffness: 200 }}
+              >
+                <Gamepad className="h-5 w-5 text-white" />
+              </motion.div>
+              <div>
+                <motion.h3 
+                  className="text-xl font-bold mb-1"
+                  initial={{ y: -5, opacity: 0 }}
+                  animate={{ y: 0, opacity: 1 }}
+                  transition={{ delay: 0.1 }}
+                >
+                  {activeGame.name}
+                </motion.h3>
+                <motion.p 
+                  className="text-gray-300 mb-3"
+                  initial={{ y: -5, opacity: 0 }}
+                  animate={{ y: 0, opacity: 1 }}
+                  transition={{ delay: 0.2 }}
+                >
+                  {activeGame.description}
+                </motion.p>
+                <motion.div
+                  initial={{ scale: 0.9, opacity: 0 }}
+                  animate={{ scale: 1, opacity: 1 }}
+                  transition={{ delay: 0.3 }}
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                >
+                  <Button onClick={startGame} className="bg-purple-600 hover:bg-purple-700">
+                    Start Game
+                  </Button>
+                </motion.div>
+              </div>
             </div>
-            <div>
-              <h3 className="text-xl font-bold mb-1">{activeGame.name}</h3>
-              <p className="text-gray-300 mb-3">{activeGame.description}</p>
-              <Button onClick={startGame} className="bg-purple-600 hover:bg-purple-700">
-                Start Game
-              </Button>
-            </div>
-          </div>
-        </motion.div>
-      )}
+          </motion.div>
+        )}
+      </AnimatePresence>
       
       {/* Legend */}
       {!playingGame && (
-        <div className="mt-4 bg-slate-800/80 p-3 rounded-lg">
+        <motion.div 
+          className="mt-4 bg-slate-800/80 p-3 rounded-lg"
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.4 }}
+        >
           <h3 className="text-white text-sm font-semibold mb-2 flex items-center">
             Kerala Map Legend
           </h3>
@@ -614,7 +826,9 @@ const KeralaItinerary = () => {
               <span>Path</span>
             </div>
             <div className="flex items-center">
-              <div className="w-4 h-4 bg-blue-500 mr-2"></div>
+              <div className="w-4 h-4 bg-blue-500 mr-2 flex items-center justify-center">
+                <Waves className="w-3 h-3 text-blue-300" />
+              </div>
               <span>Backwaters</span>
             </div>
             <div className="flex items-center">
@@ -632,7 +846,7 @@ const KeralaItinerary = () => {
               <span>Mini-Games</span>
             </div>
           </div>
-        </div>
+        </motion.div>
       )}
       
       {/* Mobile controls */}
