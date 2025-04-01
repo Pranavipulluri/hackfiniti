@@ -8,7 +8,9 @@ import getStarfield from '@/utils/getStarfield';
 const WorldGlobe = () => {
   const containerRef = useRef<HTMLDivElement>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [loadedTextureCount, setLoadedTextureCount] = useState(0);
   const [highlightedRegion, setHighlightedRegion] = useState<string | null>(null);
+  const totalTextures = 6; // Total number of textures we're loading
 
   useEffect(() => {
     if (!containerRef.current) return;
@@ -34,11 +36,27 @@ const WorldGlobe = () => {
     const globeRadius = 5;
     const geometry = new THREE.SphereGeometry(globeRadius, 64, 64);
     
-    // Load high-quality textures
-    const textureLoader = new THREE.TextureLoader();
+    // Progress tracking for texture loading
+    const textureLoadingManager = new THREE.LoadingManager();
+    textureLoadingManager.onProgress = (url, itemsLoaded, itemsTotal) => {
+      console.log(`Loaded ${itemsLoaded} of ${itemsTotal} textures`);
+      setLoadedTextureCount(itemsLoaded);
+      
+      if (itemsLoaded === totalTextures) {
+        setIsLoading(false);
+        console.log('All textures loaded successfully');
+      }
+    };
+    
+    textureLoadingManager.onError = (url) => {
+      console.error('Error loading texture:', url);
+    };
+    
+    // Load high-quality textures with loading manager
+    const textureLoader = new THREE.TextureLoader(textureLoadingManager);
     
     // Earth textures - using the uploaded images
-    const earthTexture = textureLoader.load('/lovable-uploads/6f193511-ed71-4254-9fe5-12c9a742bcb8.png', () => setIsLoading(false));
+    const earthTexture = textureLoader.load('/lovable-uploads/6f193511-ed71-4254-9fe5-12c9a742bcb8.png');
     const bumpMap = textureLoader.load('/lovable-uploads/7dba028d-dee9-429d-b962-31813da2f7d6.png');
     const specularMap = textureLoader.load('/lovable-uploads/0f41f884-bdba-40de-b5ce-232337819c8d.png');
     const lightsTexture = textureLoader.load('/lovable-uploads/a13ebc1b-3f9e-4de4-8106-46ecf6df09e7.png');
@@ -269,7 +287,9 @@ const WorldGlobe = () => {
         <div className="absolute inset-0 flex items-center justify-center bg-background/80">
           <div className="flex flex-col items-center">
             <div className="w-16 h-16 border-4 border-t-teal-500 border-teal-200 rounded-full animate-spin"></div>
-            <p className="mt-4 text-teal-500 font-semibold">Loading 3D India Globe...</p>
+            <p className="mt-4 text-teal-500 font-semibold">
+              Loading 3D India Globe ({Math.round((loadedTextureCount / totalTextures) * 100)}%)
+            </p>
           </div>
         </div>
       )}

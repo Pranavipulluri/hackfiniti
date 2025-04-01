@@ -2,7 +2,7 @@
 import { motion } from "framer-motion";
 import { Globe, Users, ShoppingBag, GraduationCap, Gamepad, MessageCircle, Sparkles } from "lucide-react";
 import { Link } from "react-router-dom";
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import { Card } from "@/components/ui/card";
 import WorldGlobe from "@/components/WorldGlobe";
 import NavigationBar from "@/components/NavigationBar";
@@ -12,6 +12,8 @@ import SoundButton from "@/components/SoundButton";
 import { soundManager } from "@/utils/soundUtils";
 
 const Index = () => {
+  const globeRef = useRef<HTMLDivElement>(null);
+  
   useEffect(() => {
     // Preload our sounds when the component mounts
     soundManager.preloadSound('click', '/sounds/click.mp3');
@@ -109,10 +111,11 @@ const Index = () => {
           initial={{ opacity: 0, scale: 0.9 }}
           animate={{ opacity: 1, scale: 1 }}
           transition={{ duration: 0.6, delay: 0.2 }}
-          className="relative h-[500px] mb-20"
+          className="relative h-[600px] mb-20"
+          ref={globeRef}
         >
           <div className="absolute inset-0 rounded-full bg-gradient-to-r from-orange-500/20 to-yellow-500/20 blur-xl transform scale-90 -z-10"></div>
-          <div className="relative z-10">
+          <div className="relative z-10 h-full">
             <WorldGlobe />
           </div>
           <div className="absolute bottom-10 left-1/2 transform -translate-x-1/2 bg-black/50 backdrop-blur-md rounded-full px-6 py-3 text-yellow-100 border border-orange-500/30 text-lg font-playfair">
