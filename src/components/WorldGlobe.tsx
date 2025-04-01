@@ -6,6 +6,7 @@ import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls';
 const WorldGlobe = () => {
   const containerRef = useRef<HTMLDivElement>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [highlightedRegion, setHighlightedRegion] = useState<string | null>(null);
 
   useEffect(() => {
     if (!containerRef.current) return;
@@ -36,6 +37,9 @@ const WorldGlobe = () => {
     const specularMap = textureLoader.load('/earth-specular.jpg');
     const cloudsTexture = textureLoader.load('/earth-clouds.png');
     
+    // Create custom India overlay with the uploaded image
+    const indiaTexture = textureLoader.load('/lovable-uploads/83e8b320-f6a9-4a0e-ba1d-f13a8ddc5ea8.png');
+    
     // High-quality material
     const material = new THREE.MeshPhongMaterial({
       map: earthTexture,
@@ -50,6 +54,42 @@ const WorldGlobe = () => {
     // Create Earth globe
     const globe = new THREE.Mesh(geometry, material);
     scene.add(globe);
+    
+    // India region highlight marker with custom texture
+    const indiaPosition = {
+      lat: 20.5937, 
+      lng: 78.9629
+    };
+    
+    // Convert lat/lng to 3D coordinates
+    const phi = (90 - indiaPosition.lat) * Math.PI / 180;
+    const theta = (indiaPosition.lng + 180) * Math.PI / 180;
+    
+    const x = -globeRadius * Math.sin(phi) * Math.cos(theta) * 1.01; // Slightly outside globe
+    const y = globeRadius * Math.cos(phi) * 1.01;
+    const z = globeRadius * Math.sin(phi) * Math.sin(theta) * 1.01;
+    
+    // Create a plane for India shaped marker
+    const indiaMarkerSize = 1.8;
+    const indiaMarkerGeometry = new THREE.PlaneGeometry(indiaMarkerSize, indiaMarkerSize);
+    const indiaMarkerMaterial = new THREE.MeshBasicMaterial({
+      map: indiaTexture,
+      transparent: true,
+      depthWrite: false,
+      side: THREE.DoubleSide,
+      opacity: 0.95
+    });
+    
+    const indiaMarker = new THREE.Mesh(indiaMarkerGeometry, indiaMarkerMaterial);
+    indiaMarker.position.set(x, y, z);
+    indiaMarker.lookAt(0, 0, 0); // Make it face the center of the globe
+    globe.add(indiaMarker);
+    
+    // Pulsing effect for India marker
+    const pulsingIndia = () => {
+      indiaMarker.scale.x = 1 + 0.1 * Math.sin(Date.now() * 0.002);
+      indiaMarker.scale.y = 1 + 0.1 * Math.sin(Date.now() * 0.002);
+    };
     
     // Add clouds layer
     const cloudGeometry = new THREE.SphereGeometry(globeRadius + 0.15, 64, 64);
@@ -109,7 +149,7 @@ const WorldGlobe = () => {
     scene.add(stars);
 
     // Add markers for important cultural regions
-    const addMarker = (lat, lng, color) => {
+    const addMarker = (lat, lng, color, size = 0.1) => {
       const phi = (90 - lat) * Math.PI / 180;
       const theta = (lng + 180) * Math.PI / 180;
       
@@ -118,7 +158,7 @@ const WorldGlobe = () => {
       const z = globeRadius * Math.sin(phi) * Math.sin(theta);
       
       // Create marker
-      const markerGeometry = new THREE.SphereGeometry(0.1, 16, 16);
+      const markerGeometry = new THREE.SphereGeometry(size, 16, 16);
       const markerMaterial = new THREE.MeshBasicMaterial({ color });
       const marker = new THREE.Mesh(markerGeometry, markerMaterial);
       
@@ -126,7 +166,7 @@ const WorldGlobe = () => {
       
       // Add pulsing effect
       const pulse = new THREE.Mesh(
-        new THREE.SphereGeometry(0.15, 16, 16),
+        new THREE.SphereGeometry(size * 1.5, 16, 16),
         new THREE.MeshBasicMaterial({
           color,
           transparent: true,
@@ -141,17 +181,32 @@ const WorldGlobe = () => {
       return { marker, pulse };
     };
     
-    // Add cultural hotspots
+    // Add cultural hotspots - focus on India and Kerala
     const markers = [
-      addMarker(10.8505, 76.2711, 0xff3333), // Kerala, India
-      addMarker(35.8617, 104.1954, 0xffcc00), // China
-      addMarker(37.0902, -95.7129, 0x33ff33), // USA
-      addMarker(-14.2350, -51.9253, 0x3333ff), // Brazil
-      addMarker(55.3781, -3.4360, 0xff33ff), // UK
-      addMarker(26.8206, 30.8025, 0x33ffff), // Egypt
-      addMarker(-25.2744, 133.7751, 0xffff33), // Australia
-      addMarker(61.5240, 105.3188, 0xff9900), // Russia
+      addMarker(10.8505, 76.2711, 0xff3333, 0.15), // Kerala, India - larger
+      addMarker(28.6139, 77.2090, 0xffcc00), // Delhi, India
+      addMarker(19.0760, 72.8777, 0x33ff33), // Mumbai, India
+      addMarker(22.5726, 88.3639, 0x3333ff), // Kolkata, India
+      addMarker(13.0827, 80.2707, 0xff33ff), // Chennai, India
+      addMarker(17.3850, 78.4867, 0x33ffff), // Hyderabad, India
+      addMarker(26.9124, 75.7873, 0xffff33), // Jaipur, India
+      addMarker(30.7333, 76.7794, 0xff9900), // Chandigarh, India
     ];
+
+    // Focus camera on India when loaded
+    const focusOnIndia = () => {
+      // Position for India view
+      const targetPhi = (90 - indiaPosition.lat) * Math.PI / 180;
+      const targetTheta = (indiaPosition.lng + 180) * Math.PI / 180;
+      
+      const targetX = -15 * Math.sin(targetPhi) * Math.cos(targetTheta);
+      const targetY = 15 * Math.cos(targetPhi) * 0.5; // Offset to show more of the region
+      const targetZ = 15 * Math.sin(targetPhi) * Math.sin(targetTheta);
+      
+      camera.position.set(targetX, targetY, targetZ);
+      camera.lookAt(0, 0, 0);
+      controls.update();
+    };
 
     // Lighting
     const ambientLight = new THREE.AmbientLight(0x333333, 1);
@@ -180,6 +235,12 @@ const WorldGlobe = () => {
     controls.autoRotate = true;
     controls.autoRotateSpeed = 0.5;
 
+    // Focus on India after a short delay
+    setTimeout(() => {
+      focusOnIndia();
+      controls.autoRotate = false; // Stop auto-rotation when focused
+    }, 2000);
+
     // Animation
     let rotation = 0;
     const animate = () => {
@@ -195,6 +256,9 @@ const WorldGlobe = () => {
       markers.forEach(({ pulse }) => {
         pulse.scale.setScalar(1 + 0.1 * Math.sin(Date.now() * 0.003));
       });
+      
+      // Pulse India marker
+      pulsingIndia();
       
       controls.update();
       renderer.render(scene, camera);
@@ -227,7 +291,7 @@ const WorldGlobe = () => {
         <div className="absolute inset-0 flex items-center justify-center bg-background/80">
           <div className="flex flex-col items-center">
             <div className="w-16 h-16 border-4 border-t-teal-500 border-teal-200 rounded-full animate-spin"></div>
-            <p className="mt-4 text-teal-500 font-semibold">Loading 3D Earth...</p>
+            <p className="mt-4 text-teal-500 font-semibold">Loading 3D India Globe...</p>
           </div>
         </div>
       )}

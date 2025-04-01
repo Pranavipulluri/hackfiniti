@@ -37,8 +37,8 @@ const WelcomePage = () => {
         >
           <WorldGlobe />
           <div className="absolute bottom-6 left-6 right-6 bg-slate-900/80 backdrop-blur-sm p-4 rounded-lg border border-teal-500/30">
-            <h3 className="text-xl font-bold text-white mb-2">Interactive World Explorer</h3>
-            <p className="text-gray-300">Drag to rotate the globe. Zoom in and out to explore cultural hotspots around the world.</p>
+            <h3 className="text-xl font-bold text-white mb-2">Interactive India Explorer</h3>
+            <p className="text-gray-300">Drag to rotate the globe. Zoom in and out to explore cultural hotspots around India.</p>
           </div>
         </motion.div>
       </div>
