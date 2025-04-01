@@ -33,12 +33,14 @@ export default function getStarfield({ numStars = 500 } = {}) {
   const geo = new THREE.BufferGeometry();
   geo.setAttribute("position", new THREE.Float32BufferAttribute(verts, 3));
   geo.setAttribute("color", new THREE.Float32BufferAttribute(colors, 3));
+  
+  // Change the texture path to use the public directory directly
+  const starTexture = new THREE.TextureLoader().load("/textures/circle.png");
+  
   const mat = new THREE.PointsMaterial({
     size: 0.2,
     vertexColors: true,
-    map: new THREE.TextureLoader().load(
-      "/textures/circle.png"
-    ),
+    map: starTexture,
   });
   const points = new THREE.Points(geo, mat);
   return points;

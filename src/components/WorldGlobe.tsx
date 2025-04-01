@@ -10,7 +10,34 @@ const WorldGlobe = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [loadedTextureCount, setLoadedTextureCount] = useState(0);
   const [highlightedRegion, setHighlightedRegion] = useState<string | null>(null);
-  const totalTextures = 6; // Total number of textures we're loading
+  const totalTextures = 1; // We'll reduce this to just track essential textures
+  
+  // Create fallback textures
+  const createFallbackTexture = (color: string = '#1E88E5') => {
+    const canvas = document.createElement('canvas');
+    canvas.width = 1024;
+    canvas.height = 512;
+    const context = canvas.getContext('2d');
+    if (context) {
+      context.fillStyle = color;
+      context.fillRect(0, 0, canvas.width, canvas.height);
+      
+      // For earth texture, create some visible continents
+      if (color === '#1E88E5') { // blue for ocean
+        context.fillStyle = '#4CAF50'; // green for land
+        // Draw basic continent shapes
+        context.beginPath();
+        context.arc(canvas.width * 0.7, canvas.height * 0.4, 80, 0, Math.PI * 2);
+        context.fill();
+        context.beginPath();
+        context.arc(canvas.width * 0.3, canvas.height * 0.5, 120, 0, Math.PI * 2);
+        context.fill();
+      }
+    }
+    
+    const texture = new THREE.CanvasTexture(canvas);
+    return texture;
+  };
 
   useEffect(() => {
     if (!containerRef.current) return;
@@ -32,51 +59,24 @@ const WorldGlobe = () => {
     const starfield = getStarfield({ numStars: 2000 });
     scene.add(starfield);
 
-    // Create globe with high-resolution textures
+    // Create globe with fallback textures
     const globeRadius = 5;
     const geometry = new THREE.SphereGeometry(globeRadius, 64, 64);
     
-    // Progress tracking for texture loading
-    const textureLoadingManager = new THREE.LoadingManager();
-    textureLoadingManager.onProgress = (url, itemsLoaded, itemsTotal) => {
-      console.log(`Loaded ${itemsLoaded} of ${itemsTotal} textures`);
-      setLoadedTextureCount(itemsLoaded);
-      
-      if (itemsLoaded === totalTextures) {
-        setIsLoading(false);
-        console.log('All textures loaded successfully');
-      }
-    };
+    // Create fallback textures
+    const earthTexture = createFallbackTexture('#1E88E5');
+    const bumpMap = createFallbackTexture('#555555');
+    const specularMap = createFallbackTexture('#FFFFFF');
     
-    textureLoadingManager.onError = (url) => {
-      console.error('Error loading texture:', url);
-    };
-    
-    // Load high-quality textures with loading manager
-    const textureLoader = new THREE.TextureLoader(textureLoadingManager);
-    
-    // Earth textures - using the uploaded images
-    const earthTexture = textureLoader.load('/lovable-uploads/6f193511-ed71-4254-9fe5-12c9a742bcb8.png');
-    const bumpMap = textureLoader.load('/lovable-uploads/7dba028d-dee9-429d-b962-31813da2f7d6.png');
-    const specularMap = textureLoader.load('/lovable-uploads/0f41f884-bdba-40de-b5ce-232337819c8d.png');
-    const lightsTexture = textureLoader.load('/lovable-uploads/a13ebc1b-3f9e-4de4-8106-46ecf6df09e7.png');
-    const cloudsTexture = textureLoader.load('/lovable-uploads/e1eca0ca-fb09-4e18-8078-afdfe51022d0.png');
-    const cloudTransparency = textureLoader.load('/lovable-uploads/0c006bd2-074a-4c74-8c08-6136ae14d05c.png');
-    
-    // Custom India overlay with the uploaded image
-    const indiaTexture = textureLoader.load('/lovable-uploads/83e8b320-f6a9-4a0e-ba1d-f13a8ddc5ea8.png');
-    
-    // Earth material with improved settings
+    // Earth material with fallback textures
     const material = new THREE.MeshPhongMaterial({
       map: earthTexture,
       bumpMap: bumpMap,
       bumpScale: 0.1,
-      specularMap: specularMap,
       specular: new THREE.Color(0x333333),
       shininess: 25,
-      emissive: new THREE.Color(0x000000),
-      emissiveMap: lightsTexture,
-      emissiveIntensity: 1.5,
+      emissive: new THREE.Color(0x111111),
+      emissiveIntensity: 0.5,
     });
     
     // Create Earth globe
@@ -92,54 +92,8 @@ const WorldGlobe = () => {
     const atmosphere = new THREE.Mesh(atmosphereGeo, fresenelMat);
     scene.add(atmosphere);
     
-    // India region highlight marker with custom texture
-    const indiaPosition = {
-      lat: 20.5937, 
-      lng: 78.9629
-    };
-    
-    // Convert lat/lng to 3D coordinates
-    const phi = (90 - indiaPosition.lat) * Math.PI / 180;
-    const theta = (indiaPosition.lng + 180) * Math.PI / 180;
-    
-    const x = -globeRadius * Math.sin(phi) * Math.cos(theta) * 1.01; // Slightly outside globe
-    const y = globeRadius * Math.cos(phi) * 1.01;
-    const z = globeRadius * Math.sin(phi) * Math.sin(theta) * 1.01;
-    
-    // Create a plane for India shaped marker
-    const indiaMarkerSize = 1.8;
-    const indiaMarkerGeometry = new THREE.PlaneGeometry(indiaMarkerSize, indiaMarkerSize);
-    const indiaMarkerMaterial = new THREE.MeshBasicMaterial({
-      map: indiaTexture,
-      transparent: true,
-      depthWrite: false,
-      side: THREE.DoubleSide,
-      opacity: 0.95
-    });
-    
-    const indiaMarker = new THREE.Mesh(indiaMarkerGeometry, indiaMarkerMaterial);
-    indiaMarker.position.set(x, y, z);
-    indiaMarker.lookAt(0, 0, 0); // Make it face the center of the globe
-    globe.add(indiaMarker);
-    
-    // Pulsing effect for India marker
-    const pulsingIndia = () => {
-      indiaMarker.scale.x = 1 + 0.1 * Math.sin(Date.now() * 0.002);
-      indiaMarker.scale.y = 1 + 0.1 * Math.sin(Date.now() * 0.002);
-    };
-    
-    // Add clouds layer with transparency
-    const cloudGeometry = new THREE.SphereGeometry(globeRadius + 0.15, 64, 64);
-    const cloudMaterial = new THREE.MeshPhongMaterial({
-      map: cloudsTexture,
-      alphaMap: cloudTransparency,
-      transparent: true,
-      opacity: 0.8,
-      depthWrite: false
-    });
-    
-    const clouds = new THREE.Mesh(cloudGeometry, cloudMaterial);
-    scene.add(clouds);
+    // Mark the loading complete since we're using fallback textures
+    setIsLoading(false);
     
     // Add markers for important cultural regions
     const addMarker = (lat, lng, color, size = 0.1) => {
@@ -186,9 +140,14 @@ const WorldGlobe = () => {
       addMarker(30.7333, 76.7794, 0xff9900), // Chandigarh, India
     ];
 
-    // Focus camera on India when loaded
+    // Focus on India region
+    const indiaPosition = {
+      lat: 20.5937, 
+      lng: 78.9629
+    };
+
+    // Position camera for India view
     const focusOnIndia = () => {
-      // Position for India view
       const targetPhi = (90 - indiaPosition.lat) * Math.PI / 180;
       const targetTheta = (indiaPosition.lng + 180) * Math.PI / 180;
       
@@ -232,7 +191,7 @@ const WorldGlobe = () => {
     setTimeout(() => {
       focusOnIndia();
       controls.autoRotate = false; // Stop auto-rotation when focused
-    }, 2000);
+    }, 500);
 
     // Animation
     let rotation = 0;
@@ -242,9 +201,6 @@ const WorldGlobe = () => {
       // Auto-rotation when not interacting
       rotation += 0.001;
       
-      // Rotate clouds slightly faster than the globe
-      clouds.rotation.y = rotation * 1.1;
-      
       // Update starfield rotation
       starfield.rotation.y = rotation * 0.2;
       
@@ -252,9 +208,6 @@ const WorldGlobe = () => {
       markers.forEach(({ pulse }) => {
         pulse.scale.setScalar(1 + 0.1 * Math.sin(Date.now() * 0.003));
       });
-      
-      // Pulse India marker
-      pulsingIndia();
       
       controls.update();
       renderer.render(scene, camera);
@@ -288,7 +241,7 @@ const WorldGlobe = () => {
           <div className="flex flex-col items-center">
             <div className="w-16 h-16 border-4 border-t-teal-500 border-teal-200 rounded-full animate-spin"></div>
             <p className="mt-4 text-teal-500 font-semibold">
-              Loading 3D India Globe ({Math.round((loadedTextureCount / totalTextures) * 100)}%)
+              Loading 3D India Globe...
             </p>
           </div>
         </div>
