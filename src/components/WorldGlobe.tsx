@@ -2,6 +2,8 @@
 import { useEffect, useRef, useState } from 'react';
 import * as THREE from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls';
+import { getFresnelMat } from '@/utils/getFresnelMat';
+import getStarfield from '@/utils/getStarfield';
 
 const WorldGlobe = () => {
   const containerRef = useRef<HTMLDivElement>(null);
@@ -24,6 +26,10 @@ const WorldGlobe = () => {
     renderer.setPixelRatio(window.devicePixelRatio);
     containerRef.current.appendChild(renderer.domElement);
 
+    // Add starfield
+    const starfield = getStarfield({ numStars: 2000 });
+    scene.add(starfield);
+
     // Create globe with high-resolution textures
     const globeRadius = 5;
     const geometry = new THREE.SphereGeometry(globeRadius, 64, 64);
@@ -31,29 +37,42 @@ const WorldGlobe = () => {
     // Load high-quality textures
     const textureLoader = new THREE.TextureLoader();
     
-    // Earth textures
-    const earthTexture = textureLoader.load('/earth-texture.jpg', () => setIsLoading(false));
-    const bumpMap = textureLoader.load('/earth-bump.jpg');
-    const specularMap = textureLoader.load('/earth-specular.jpg');
-    const cloudsTexture = textureLoader.load('/earth-clouds.png');
+    // Earth textures - using the uploaded images
+    const earthTexture = textureLoader.load('/lovable-uploads/6f193511-ed71-4254-9fe5-12c9a742bcb8.png', () => setIsLoading(false));
+    const bumpMap = textureLoader.load('/lovable-uploads/7dba028d-dee9-429d-b962-31813da2f7d6.png');
+    const specularMap = textureLoader.load('/lovable-uploads/0f41f884-bdba-40de-b5ce-232337819c8d.png');
+    const lightsTexture = textureLoader.load('/lovable-uploads/a13ebc1b-3f9e-4de4-8106-46ecf6df09e7.png');
+    const cloudsTexture = textureLoader.load('/lovable-uploads/e1eca0ca-fb09-4e18-8078-afdfe51022d0.png');
+    const cloudTransparency = textureLoader.load('/lovable-uploads/0c006bd2-074a-4c74-8c08-6136ae14d05c.png');
     
-    // Create custom India overlay with the uploaded image
+    // Custom India overlay with the uploaded image
     const indiaTexture = textureLoader.load('/lovable-uploads/83e8b320-f6a9-4a0e-ba1d-f13a8ddc5ea8.png');
     
-    // High-quality material
+    // Earth material with improved settings
     const material = new THREE.MeshPhongMaterial({
       map: earthTexture,
       bumpMap: bumpMap,
       bumpScale: 0.1,
       specularMap: specularMap,
-      shininess: 15,
-      emissive: new THREE.Color(0x112244),
-      emissiveIntensity: 0.1
+      specular: new THREE.Color(0x333333),
+      shininess: 25,
+      emissive: new THREE.Color(0x000000),
+      emissiveMap: lightsTexture,
+      emissiveIntensity: 1.5,
     });
     
     // Create Earth globe
     const globe = new THREE.Mesh(geometry, material);
     scene.add(globe);
+    
+    // Add fresnel effect for atmosphere glow
+    const fresenelMat = getFresnelMat({
+      rimHex: 0x0099ff,
+      facingHex: 0x000000
+    });
+    const atmosphereGeo = new THREE.SphereGeometry(globeRadius * 1.08, 64, 64);
+    const atmosphere = new THREE.Mesh(atmosphereGeo, fresenelMat);
+    scene.add(atmosphere);
     
     // India region highlight marker with custom texture
     const indiaPosition = {
@@ -91,71 +110,27 @@ const WorldGlobe = () => {
       indiaMarker.scale.y = 1 + 0.1 * Math.sin(Date.now() * 0.002);
     };
     
-    // Add clouds layer
+    // Add clouds layer with transparency
     const cloudGeometry = new THREE.SphereGeometry(globeRadius + 0.15, 64, 64);
     const cloudMaterial = new THREE.MeshPhongMaterial({
       map: cloudsTexture,
+      alphaMap: cloudTransparency,
       transparent: true,
-      opacity: 0.4,
+      opacity: 0.8,
       depthWrite: false
     });
     
     const clouds = new THREE.Mesh(cloudGeometry, cloudMaterial);
     scene.add(clouds);
     
-    // Add atmosphere glow
-    const atmosphereGeometry = new THREE.SphereGeometry(globeRadius + 0.3, 64, 64);
-    const atmosphereMaterial = new THREE.ShaderMaterial({
-      vertexShader: `
-        varying vec3 vNormal;
-        void main() {
-          vNormal = normalize(normalMatrix * normal);
-          gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
-        }
-      `,
-      fragmentShader: `
-        varying vec3 vNormal;
-        void main() {
-          float intensity = pow(0.7 - dot(vNormal, vec3(0.0, 0.0, 1.0)), 2.0);
-          gl_FragColor = vec4(0.3, 0.6, 1.0, 1.0) * intensity;
-        }
-      `,
-      blending: THREE.AdditiveBlending,
-      side: THREE.BackSide,
-      transparent: true
-    });
-    
-    const atmosphere = new THREE.Mesh(atmosphereGeometry, atmosphereMaterial);
-    scene.add(atmosphere);
-
-    // Add stars background
-    const starGeometry = new THREE.BufferGeometry();
-    const starMaterial = new THREE.PointsMaterial({
-      color: 0xffffff,
-      size: 0.1,
-      transparent: true
-    });
-    
-    const starVertices = [];
-    for (let i = 0; i < 10000; i++) {
-      const x = (Math.random() - 0.5) * 2000;
-      const y = (Math.random() - 0.5) * 2000;
-      const z = (Math.random() - 0.5) * 2000;
-      starVertices.push(x, y, z);
-    }
-    
-    starGeometry.setAttribute('position', new THREE.Float32BufferAttribute(starVertices, 3));
-    const stars = new THREE.Points(starGeometry, starMaterial);
-    scene.add(stars);
-
     // Add markers for important cultural regions
     const addMarker = (lat, lng, color, size = 0.1) => {
       const phi = (90 - lat) * Math.PI / 180;
       const theta = (lng + 180) * Math.PI / 180;
       
-      const x = -globeRadius * Math.sin(phi) * Math.cos(theta);
-      const y = globeRadius * Math.cos(phi);
-      const z = globeRadius * Math.sin(phi) * Math.sin(theta);
+      const x = -globeRadius * Math.sin(phi) * Math.cos(theta) * 1.01;
+      const y = globeRadius * Math.cos(phi) * 1.01;
+      const z = globeRadius * Math.sin(phi) * Math.sin(theta) * 1.01;
       
       // Create marker
       const markerGeometry = new THREE.SphereGeometry(size, 16, 16);
@@ -209,7 +184,7 @@ const WorldGlobe = () => {
     };
 
     // Lighting
-    const ambientLight = new THREE.AmbientLight(0x333333, 1);
+    const ambientLight = new THREE.AmbientLight(0x404040, 1);
     scene.add(ambientLight);
 
     const pointLight = new THREE.PointLight(0xffffff, 1.5);
@@ -251,6 +226,9 @@ const WorldGlobe = () => {
       
       // Rotate clouds slightly faster than the globe
       clouds.rotation.y = rotation * 1.1;
+      
+      // Update starfield rotation
+      starfield.rotation.y = rotation * 0.2;
       
       // Pulse the markers
       markers.forEach(({ pulse }) => {

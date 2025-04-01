@@ -35,8 +35,9 @@ const WelcomePage = () => {
           transition={{ duration: 0.5, delay: 0.2 }}
           className="h-[600px] relative rounded-2xl overflow-hidden border border-teal-500/30 shadow-xl"
         >
+          <div className="absolute inset-0 bg-gradient-to-br from-slate-900/70 to-slate-800/50 z-0"></div>
           <WorldGlobe />
-          <div className="absolute bottom-6 left-6 right-6 bg-slate-900/80 backdrop-blur-sm p-4 rounded-lg border border-teal-500/30">
+          <div className="absolute bottom-6 left-6 right-6 bg-slate-900/80 backdrop-blur-sm p-4 rounded-lg border border-teal-500/30 z-10">
             <h3 className="text-xl font-bold text-white mb-2">Interactive India Explorer</h3>
             <p className="text-gray-300">Drag to rotate the globe. Zoom in and out to explore cultural hotspots around India.</p>
           </div>
