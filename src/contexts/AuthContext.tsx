@@ -11,6 +11,7 @@ type AuthContextProps = {
   signIn: (username: string, password: string) => Promise<void>;
   signUp: (username: string, password: string) => Promise<void>;
   signOut: () => Promise<void>;
+  isDemoMode: boolean;
 };
 
 const AuthContext = createContext<AuthContextProps | undefined>(undefined);
@@ -19,44 +20,82 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
+  const [isDemoMode, setIsDemoMode] = useState(false);
   const { toast } = useToast();
 
   useEffect(() => {
-    const getInitialSession = async () => {
-      setLoading(true);
-      try {
-        const { data: { session }, error } = await supabase.auth.getSession();
+    const checkDemoMode = () => {
+      const demoMode = localStorage.getItem('culturalQuestDemoMode') === 'true';
+      setIsDemoMode(demoMode);
+      
+      // If in demo mode, set loading to false
+      if (demoMode) {
+        setLoading(false);
+      }
+    };
+    
+    // Check for demo mode first
+    checkDemoMode();
+    
+    // Only proceed with Supabase session if not in demo mode
+    if (!isDemoMode) {
+      const getInitialSession = async () => {
+        setLoading(true);
+        try {
+          const { data: { session }, error } = await supabase.auth.getSession();
 
-        if (error) {
-          console.error('Error retrieving session:', error);
+          if (error) {
+            console.error('Error retrieving session:', error);
+          }
+
+          setSession(session);
+          setUser(session?.user ?? null);
+        } catch (error) {
+          console.error('Failed to get initial session:', error);
+        } finally {
+          setLoading(false);
         }
+      };
 
-        setSession(session);
-        setUser(session?.user ?? null);
-      } catch (error) {
-        console.error('Failed to get initial session:', error);
-      } finally {
-        setLoading(false);
-      }
+      getInitialSession();
+
+      const { data: { subscription } } = supabase.auth.onAuthStateChange(
+        (_event, session) => {
+          setSession(session);
+          setUser(session?.user ?? null);
+          setLoading(false);
+        }
+      );
+
+      return () => {
+        subscription.unsubscribe();
+      };
+    }
+  }, [isDemoMode]);
+
+  // Check for demo mode changes in localStorage
+  useEffect(() => {
+    const handleStorageChange = () => {
+      const demoMode = localStorage.getItem('culturalQuestDemoMode') === 'true';
+      setIsDemoMode(demoMode);
     };
-
-    getInitialSession();
-
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (_event, session) => {
-        setSession(session);
-        setUser(session?.user ?? null);
-        setLoading(false);
-      }
-    );
-
-    return () => {
-      subscription.unsubscribe();
-    };
+    
+    window.addEventListener('storage', handleStorageChange);
+    return () => window.removeEventListener('storage', handleStorageChange);
   }, []);
 
   const signIn = async (username: string, password: string) => {
     try {
+      // First check network connectivity
+      if (!navigator.onLine) {
+        toast({
+          title: "You're offline",
+          description: "Please check your internet connection and try again.",
+          variant: "destructive",
+        });
+        throw new Error("Network unavailable");
+      }
+      
       setLoading(true);
       
       // Validate that username is in email format for Supabase
@@ -85,6 +124,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         throw error;
       }
       
+      // Clear demo mode if it was set
+      localStorage.removeItem('culturalQuestDemoMode');
+      
       toast({
         title: "Welcome back!",
         description: "You've successfully signed in.",
@@ -99,6 +141,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const signUp = async (username: string, password: string) => {
     try {
+      // First check network connectivity
+      if (!navigator.onLine) {
+        toast({
+          title: "You're offline",
+          description: "Please check your internet connection and try again.",
+          variant: "destructive",
+        });
+        throw new Error("Network unavailable");
+      }
+      
       setLoading(true);
       
       // Ensure username is in email format for Supabase
@@ -140,6 +192,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             password 
           });
           
+          // Clear demo mode if it was set
+          localStorage.removeItem('culturalQuestDemoMode');
+          
           toast({
             title: "Account created",
             description: "Welcome to CulturalQuest! Your account has been created.",
@@ -165,6 +220,23 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const signOut = async () => {
     try {
       setLoading(true);
+      
+      // Check if in demo mode
+      if (isDemoMode) {
+        // Just clear the demo mode flag
+        localStorage.removeItem('culturalQuestDemoMode');
+        setIsDemoMode(false);
+        
+        toast({
+          title: "Exited demo mode",
+          description: "You have exited demo mode successfully.",
+        });
+        
+        setLoading(false);
+        return;
+      }
+      
+      // Regular sign out through Supabase
       const { error } = await supabase.auth.signOut();
       
       if (error) {
@@ -197,6 +269,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         signIn,
         signUp,
         signOut,
+        isDemoMode,
       }}
     >
       {children}

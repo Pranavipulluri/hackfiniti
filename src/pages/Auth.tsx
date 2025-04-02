@@ -9,8 +9,9 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Toaster } from '@/components/ui/toaster';
-import { AlertCircle } from 'lucide-react';
+import { AlertCircle, Wifi, WifiOff } from 'lucide-react';
 import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 
 const Auth = () => {
   const { signIn, signUp, user, loading } = useAuth();
@@ -20,6 +21,7 @@ const Auth = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [networkStatus, setNetworkStatus] = useState<boolean>(navigator.onLine);
+  const [showDemoDialog, setShowDemoDialog] = useState(false);
 
   // Check for online status
   useEffect(() => {
@@ -108,6 +110,14 @@ const Auth = () => {
     }
   };
 
+  const enterDemoMode = () => {
+    // Store demo mode flag in localStorage
+    localStorage.setItem('culturalQuestDemoMode', 'true');
+    // Redirect to home page
+    navigate('/');
+    setShowDemoDialog(false);
+  };
+
   return (
     <motion.div
       initial={{ opacity: 0 }}
@@ -125,9 +135,18 @@ const Auth = () => {
         <CardContent className="p-6">
           {!networkStatus && (
             <Alert variant="destructive" className="mb-4">
-              <AlertCircle className="h-4 w-4" />
-              <AlertDescription>You are currently offline. Please check your internet connection.</AlertDescription>
+              <WifiOff className="h-4 w-4" />
+              <AlertDescription>
+                You are currently offline. Please check your internet connection or use Demo Mode.
+              </AlertDescription>
             </Alert>
+          )}
+          
+          {networkStatus && (
+            <div className="flex items-center justify-center mb-4 text-sm text-green-600">
+              <Wifi className="h-4 w-4 mr-2" />
+              <span>Connected to network</span>
+            </div>
           )}
           
           {error && (
@@ -216,11 +235,42 @@ const Auth = () => {
               </form>
             </TabsContent>
           </Tabs>
+          
+          <div className="mt-6 pt-4 border-t border-gray-200">
+            <Button 
+              variant="secondary" 
+              className="w-full"
+              onClick={() => setShowDemoDialog(true)}
+            >
+              Try Demo Mode
+            </Button>
+          </div>
         </CardContent>
         <CardFooter className="flex justify-center text-sm text-gray-500">
           <p>By continuing, you agree to our Terms of Service and Privacy Policy.</p>
         </CardFooter>
       </Card>
+      
+      <Dialog open={showDemoDialog} onOpenChange={setShowDemoDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Enter Demo Mode</DialogTitle>
+            <DialogDescription>
+              Demo mode lets you explore CulturalQuest without an account. 
+              Your progress won't be saved and some features may be limited.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowDemoDialog(false)}>
+              Cancel
+            </Button>
+            <Button onClick={enterDemoMode}>
+              Continue to Demo
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+      
       <Toaster />
     </motion.div>
   );
