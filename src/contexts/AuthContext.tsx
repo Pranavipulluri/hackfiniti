@@ -192,6 +192,23 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             password 
           });
           
+          // Initialize user profile in the database
+          const { error: profileError } = await supabase
+            .from('profiles')
+            .upsert({
+              id: data.user.id,
+              username: username,
+              email: email,
+              avatar: 'https://api.dicebear.com/7.x/bottts/svg?seed=' + username,
+              level: 1,
+              xp: 0,
+              created_at: new Date().toISOString()
+            });
+            
+          if (profileError) {
+            console.error('Error creating profile:', profileError);
+          }
+          
           // Clear demo mode if it was set
           localStorage.removeItem('culturalQuestDemoMode');
           

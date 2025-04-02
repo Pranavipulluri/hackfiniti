@@ -359,7 +359,8 @@ export function ChatProvider({ children }: { children: React.ReactNode }) {
         .from('group_members')
         .insert({
           group_id: data.id,
-          user_id: user.id
+          user_id: user.id,
+          role: 'admin'
         });
 
       if (memberError) {
@@ -389,7 +390,8 @@ export function ChatProvider({ children }: { children: React.ReactNode }) {
         .from('group_members')
         .insert({
           group_id: groupId,
-          user_id: user.id
+          user_id: user.id,
+          role: 'member'
         });
 
       if (error) {
