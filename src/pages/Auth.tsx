@@ -19,6 +19,21 @@ const Auth = () => {
   const [password, setPassword] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [networkStatus, setNetworkStatus] = useState<boolean>(navigator.onLine);
+
+  // Check for online status
+  useEffect(() => {
+    const handleOnline = () => setNetworkStatus(true);
+    const handleOffline = () => setNetworkStatus(false);
+
+    window.addEventListener('online', handleOnline);
+    window.addEventListener('offline', handleOffline);
+
+    return () => {
+      window.removeEventListener('online', handleOnline);
+      window.removeEventListener('offline', handleOffline);
+    };
+  }, []);
 
   // If user is already logged in, redirect to home
   useEffect(() => {
@@ -31,6 +46,11 @@ const Auth = () => {
 
   const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!networkStatus) {
+      setError('You are offline. Please check your internet connection and try again.');
+      return;
+    }
+    
     if (!username || !password) {
       setError('Please enter both username and password');
       return;
@@ -41,9 +61,13 @@ const Auth = () => {
       setIsSubmitting(true);
       await signIn(username, password);
       // Redirection will be handled by the useEffect above
-    } catch (error) {
+    } catch (error: any) {
       console.error('Sign in error:', error);
-      setError('Failed to sign in. Please check your credentials.');
+      if (error.message === 'Failed to fetch') {
+        setError('Network error. Please check your internet connection and try again.');
+      } else {
+        setError('Failed to sign in. Please check your credentials.');
+      }
     } finally {
       setIsSubmitting(false);
     }
@@ -51,8 +75,18 @@ const Auth = () => {
 
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!networkStatus) {
+      setError('You are offline. Please check your internet connection and try again.');
+      return;
+    }
+    
     if (!username || !password) {
       setError('Please enter both username and password');
+      return;
+    }
+    
+    if (password.length < 6) {
+      setError('Password must be at least 6 characters long');
       return;
     }
     
@@ -62,9 +96,13 @@ const Auth = () => {
       await signUp(username, password);
       // The signUp function now handles the sign in automatically
       // Redirection will be handled by the useEffect above
-    } catch (error) {
+    } catch (error: any) {
       console.error('Sign up error:', error);
-      setError('Failed to create account. Username may already be taken.');
+      if (error.message === 'Failed to fetch') {
+        setError('Network error. Please check your internet connection and try again.');
+      } else {
+        setError('Failed to create account. Please try a different username or check your internet connection.');
+      }
     } finally {
       setIsSubmitting(false);
     }
@@ -85,6 +123,13 @@ const Auth = () => {
           </CardDescription>
         </CardHeader>
         <CardContent className="p-6">
+          {!networkStatus && (
+            <Alert variant="destructive" className="mb-4">
+              <AlertCircle className="h-4 w-4" />
+              <AlertDescription>You are currently offline. Please check your internet connection.</AlertDescription>
+            </Alert>
+          )}
+          
           {error && (
             <Alert variant="destructive" className="mb-4">
               <AlertCircle className="h-4 w-4" />
@@ -127,7 +172,7 @@ const Auth = () => {
                 <Button 
                   type="submit" 
                   className="w-full"
-                  disabled={isSubmitting || loading}
+                  disabled={isSubmitting || loading || !networkStatus}
                 >
                   {isSubmitting ? 'Signing in...' : 'Sign In'}
                 </Button>
@@ -159,11 +204,12 @@ const Auth = () => {
                     required
                     onClick={clearError}
                   />
+                  <p className="text-xs text-gray-500">Password must be at least 6 characters long</p>
                 </div>
                 <Button 
                   type="submit" 
                   className="w-full"
-                  disabled={isSubmitting || loading}
+                  disabled={isSubmitting || loading || !networkStatus}
                 >
                   {isSubmitting ? 'Creating Account...' : 'Create Account'}
                 </Button>

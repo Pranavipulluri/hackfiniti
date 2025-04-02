@@ -24,15 +24,20 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     const getInitialSession = async () => {
       setLoading(true);
-      const { data: { session }, error } = await supabase.auth.getSession();
+      try {
+        const { data: { session }, error } = await supabase.auth.getSession();
 
-      if (error) {
-        console.error('Error retrieving session:', error);
+        if (error) {
+          console.error('Error retrieving session:', error);
+        }
+
+        setSession(session);
+        setUser(session?.user ?? null);
+      } catch (error) {
+        console.error('Failed to get initial session:', error);
+      } finally {
+        setLoading(false);
       }
-
-      setSession(session);
-      setUser(session?.user ?? null);
-      setLoading(false);
     };
 
     getInitialSession();
@@ -54,18 +59,29 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     try {
       setLoading(true);
       
-      // Use username directly as the email to simplify authentication
+      // Validate that username is in email format for Supabase
+      const email = username.includes('@') ? username : `${username}@culturalquest.com`;
+      
       const { error } = await supabase.auth.signInWithPassword({ 
-        email: username, 
+        email, 
         password 
       });
       
       if (error) {
-        toast({
-          title: "Authentication error",
-          description: error.message,
-          variant: "destructive",
-        });
+        // Check if it's a network error
+        if (error.message === 'Failed to fetch') {
+          toast({
+            title: "Network error",
+            description: "Please check your internet connection and try again.",
+            variant: "destructive",
+          });
+        } else {
+          toast({
+            title: "Authentication error",
+            description: error.message,
+            variant: "destructive",
+          });
+        }
         throw error;
       }
       
@@ -85,9 +101,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     try {
       setLoading(true);
       
-      // Use username directly as the email
+      // Ensure username is in email format for Supabase
+      const email = username.includes('@') ? username : `${username}@culturalquest.com`;
+      
       const { data, error } = await supabase.auth.signUp({ 
-        email: username, 
+        email, 
         password,
         options: {
           data: {
@@ -97,11 +115,20 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       });
       
       if (error) {
-        toast({
-          title: "Sign up error",
-          description: error.message,
-          variant: "destructive",
-        });
+        // Check if it's a network error
+        if (error.message === 'Failed to fetch') {
+          toast({
+            title: "Network error",
+            description: "Please check your internet connection and try again.",
+            variant: "destructive",
+          });
+        } else {
+          toast({
+            title: "Sign up error",
+            description: error.message,
+            variant: "destructive",
+          });
+        }
         throw error;
       }
       
@@ -109,7 +136,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         try {
           // After signup, immediately sign in
           await supabase.auth.signInWithPassword({ 
-            email: username, 
+            email, 
             password 
           });
           
