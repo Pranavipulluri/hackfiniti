@@ -731,7 +731,7 @@ const KeralaItinerary = () => {
       
       {!playingGame && renderControls()}
       
-      <style jsx global>{`
+      <style>{`
         .pixel-art {
           image-rendering: pixelated;
           image-rendering: -moz-crisp-edges;
