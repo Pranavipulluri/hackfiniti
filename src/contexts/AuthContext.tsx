@@ -187,18 +187,27 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       if (data && data.user) {
         try {
           // After signup, immediately sign in
-          await supabase.auth.signInWithPassword({ 
+          const { error: signInError } = await supabase.auth.signInWithPassword({ 
             email, 
             password 
           });
           
-          // Initialize user profile in the database
+          if (signInError) {
+            console.error('Error auto-signing in after registration:', signInError);
+            toast({
+              title: "Sign in error after registration",
+              description: "Your account was created but we couldn't sign you in automatically. Please try signing in manually.",
+              variant: "destructive",
+            });
+            throw signInError;
+          }
+          
+          // Initialize user profile in the database - IMPORTANT: removed the email field
           const { error: profileError } = await supabase
             .from('profiles')
             .upsert({
               id: data.user.id,
               username: username,
-              email: email,
               avatar: 'https://api.dicebear.com/7.x/bottts/svg?seed=' + username,
               level: 1,
               xp: 0,

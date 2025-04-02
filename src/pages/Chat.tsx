@@ -1,386 +1,416 @@
 
 import React, { useState, useRef, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { motion } from 'framer-motion';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { ScrollArea } from '@/components/ui/scroll-area';
+import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
+import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
-import { Send, Plus, Search, UserPlus, Users } from 'lucide-react';
+import { User, UserPlus, Users, Send, Plus } from 'lucide-react';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import { Badge } from '@/components/ui/badge';
+import { Skeleton } from '@/components/ui/skeleton';
 import { format } from 'date-fns';
 import PageLayout from '@/components/PageLayout';
 import { useAuth } from '@/contexts/AuthContext';
 import { useChat } from '@/hooks/useChat';
 import { useProfile } from '@/hooks/useProfile';
-import { Profile } from '@/types/supabase-extensions';
+import { ChatContact, ChatGroup, Contact, MessageWithSender } from '@/types/supabase-extensions';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 
 const Chat = () => {
-  const { user, loading: authLoading } = useAuth();
+  const { user } = useAuth();
   const { profile } = useProfile();
-  const { 
-    messages, 
-    contacts, 
-    groups, 
-    loadingMessages, 
-    loadingContacts, 
-    loadingGroups,
+  const {
+    contacts,
+    groups,
+    loading,
+    currentMessages,
     activeChat,
     setActiveChat,
-    sendMessage
+    sendMessage,
+    createGroup
   } = useChat();
-  const navigate = useNavigate();
-  const messagesEndRef = useRef<HTMLDivElement>(null);
-  const [messageText, setMessageText] = useState('');
-  const [searchQuery, setSearchQuery] = useState('');
   
-  // Check if user is authenticated
-  useEffect(() => {
-    if (!authLoading && !user) {
-      navigate('/auth');
-    }
-  }, [user, authLoading, navigate]);
-
-  // Auto-scroll to bottom of messages
-  useEffect(() => {
+  const [inputValue, setInputValue] = useState('');
+  const [isCreatingGroup, setIsCreatingGroup] = useState(false);
+  const [groupName, setGroupName] = useState('');
+  const [selectedContacts, setSelectedContacts] = useState<string[]>([]);
+  
+  const messagesEndRef = useRef<HTMLDivElement>(null);
+  
+  const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [messages]);
-
+  };
+  
+  useEffect(() => {
+    scrollToBottom();
+  }, [currentMessages]);
+  
   const handleSendMessage = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!messageText.trim()) return;
+    if (!inputValue.trim() || !activeChat) return;
     
     try {
-      await sendMessage(messageText);
-      setMessageText('');
+      await sendMessage(inputValue);
+      setInputValue('');
     } catch (error) {
       console.error('Error sending message:', error);
     }
   };
-
-  const filteredContacts = contacts.filter(contact => 
-    contact.profile?.username.toLowerCase().includes(searchQuery.toLowerCase())
-  );
   
-  const filteredGroups = groups.filter(group => 
-    group.name.toLowerCase().includes(searchQuery.toLowerCase())
-  );
-
-  // Components for chat interface
-  const ContactItem = ({ contact }: { contact: Contact }) => (
-    <div 
-      className={`flex items-center space-x-4 p-3 rounded-lg cursor-pointer hover:bg-slate-100 transition-colors ${
-        activeChat?.type === 'contact' && activeChat.id === contact.contact_id ? 'bg-slate-200' : ''
-      }`}
-      onClick={() => setActiveChat({ type: 'contact', id: contact.contact_id })}
-    >
-      <Avatar>
-        <AvatarImage src={contact.profile?.avatar || '/placeholder.svg'} />
-        <AvatarFallback>{contact.profile?.username?.charAt(0).toUpperCase() || '?'}</AvatarFallback>
-      </Avatar>
-      <div className="flex-1">
-        <p className="font-medium">{contact.profile?.username || 'Unknown'}</p>
-      </div>
-    </div>
-  );
-
-  const GroupItem = ({ group }: { group: ChatGroup }) => (
-    <div 
-      className={`flex items-center space-x-4 p-3 rounded-lg cursor-pointer hover:bg-slate-100 transition-colors ${
-        activeChat?.type === 'group' && activeChat.id === group.id ? 'bg-slate-200' : ''
-      }`}
-      onClick={() => setActiveChat({ type: 'group', id: group.id })}
-    >
-      <Avatar>
-        <AvatarImage src={group.avatar || '/placeholder.svg'} />
-        <AvatarFallback>{group.name.charAt(0).toUpperCase()}</AvatarFallback>
-      </Avatar>
-      <div className="flex-1">
-        <p className="font-medium">{group.name}</p>
-      </div>
-    </div>
-  );
-
-  const MessageBubble = ({ message, profile }: { message: Message, profile: Profile | null }) => {
-    const isCurrentUser = message.sender_id === user?.id;
+  const handleCreateGroup = async () => {
+    if (!groupName || selectedContacts.length === 0) return;
     
-    return (
-      <div className={`flex ${isCurrentUser ? 'justify-end' : 'justify-start'} mb-4`}>
-        <div className={`flex items-end ${isCurrentUser ? 'flex-row' : 'flex-row-reverse'} space-x-2 space-x-reverse`}>
-          {!isCurrentUser && (
-            <Avatar className="w-8 h-8">
-              <AvatarImage src="/placeholder.svg" />
-              <AvatarFallback>?</AvatarFallback>
-            </Avatar>
-          )}
-          <div 
-            className={`max-w-xs px-4 py-2 rounded-lg ${
-              isCurrentUser 
-                ? 'bg-blue-500 text-white rounded-br-none' 
-                : 'bg-gray-200 text-gray-900 rounded-bl-none'
-            }`}
-          >
-            <p>{message.content}</p>
-            <p className={`text-xs mt-1 ${isCurrentUser ? 'text-blue-50' : 'text-gray-500'}`}>
-              {format(new Date(message.created_at), 'p')}
-            </p>
-          </div>
-          {isCurrentUser && (
-            <Avatar className="w-8 h-8">
-              <AvatarImage src={profile?.avatar || '/placeholder.svg'} />
-              <AvatarFallback>{profile?.username?.charAt(0).toUpperCase() || '?'}</AvatarFallback>
-            </Avatar>
-          )}
-        </div>
-      </div>
-    );
+    try {
+      await createGroup(groupName, selectedContacts);
+      setGroupName('');
+      setSelectedContacts([]);
+      setIsCreatingGroup(false);
+    } catch (error) {
+      console.error('Error creating group:', error);
+    }
   };
-
-  const AddContactDialog = () => {
-    const [contactEmail, setContactEmail] = useState('');
-    const [isSubmitting, setIsSubmitting] = useState(false);
-    
-    const handleAddContact = async () => {
-      if (!contactEmail.trim()) return;
-      
-      setIsSubmitting(true);
-      try {
-        // In a real app, you'd search for users by email
-        // For now, we're just showing how the UI would work
-        console.log('Adding contact with email:', contactEmail);
-        
-        // Simulate success
-        setTimeout(() => {
-          setContactEmail('');
-          setIsSubmitting(false);
-        }, 1000);
-      } catch (error) {
-        console.error('Error adding contact:', error);
-        setIsSubmitting(false);
-      }
-    };
-    
-    return (
-      <Dialog>
-        <DialogTrigger asChild>
-          <Button variant="outline" size="icon">
-            <UserPlus className="h-4 w-4" />
-          </Button>
-        </DialogTrigger>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Add Contact</DialogTitle>
-            <DialogDescription>
-              Enter the email of the person you want to add.
-            </DialogDescription>
-          </DialogHeader>
-          <div className="space-y-4 py-4">
-            <div className="space-y-2">
-              <Input
-                placeholder="friend@example.com"
-                value={contactEmail}
-                onChange={(e) => setContactEmail(e.target.value)}
-              />
-            </div>
-          </div>
-          <DialogFooter>
-            <Button onClick={handleAddContact} disabled={isSubmitting}>
-              {isSubmitting ? 'Adding...' : 'Add Contact'}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-    );
+  
+  const toggleContactSelection = (contactId: string) => {
+    if (selectedContacts.includes(contactId)) {
+      setSelectedContacts(prev => prev.filter(id => id !== contactId));
+    } else {
+      setSelectedContacts(prev => [...prev, contactId]);
+    }
   };
-
-  const CreateGroupDialog = () => {
-    const [groupName, setGroupName] = useState('');
-    const [isSubmitting, setIsSubmitting] = useState(false);
-    
-    const handleCreateGroup = async () => {
-      if (!groupName.trim()) return;
-      
-      setIsSubmitting(true);
-      try {
-        // In a real app, you'd create a group
-        // For now, we're just showing how the UI would work
-        console.log('Creating group:', groupName);
-        
-        // Simulate success
-        setTimeout(() => {
-          setGroupName('');
-          setIsSubmitting(false);
-        }, 1000);
-      } catch (error) {
-        console.error('Error creating group:', error);
-        setIsSubmitting(false);
-      }
-    };
-    
-    return (
-      <Dialog>
-        <DialogTrigger asChild>
-          <Button variant="outline" size="icon">
-            <Users className="h-4 w-4" />
-          </Button>
-        </DialogTrigger>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Create Group</DialogTitle>
-            <DialogDescription>
-              Create a new group chat with your friends.
-            </DialogDescription>
-          </DialogHeader>
-          <div className="space-y-4 py-4">
-            <div className="space-y-2">
-              <Input
-                placeholder="Group Name"
-                value={groupName}
-                onChange={(e) => setGroupName(e.target.value)}
-              />
-            </div>
-          </div>
-          <DialogFooter>
-            <Button onClick={handleCreateGroup} disabled={isSubmitting}>
-              {isSubmitting ? 'Creating...' : 'Create Group'}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-    );
-  };
-
+  
   return (
     <PageLayout>
-      <motion.div
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        exit={{ opacity: 0 }}
-        className="container mx-auto py-6"
-      >
-        <Card className="h-[80vh]">
-          <CardHeader className="p-4 border-b">
-            <CardTitle>Chat</CardTitle>
-          </CardHeader>
-          <div className="grid grid-cols-12 h-[calc(80vh-4rem)]">
-            {/* Sidebar */}
-            <div className="col-span-3 border-r h-full flex flex-col">
-              <div className="p-3 border-b flex items-center space-x-2">
-                <Input
-                  placeholder="Search..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="flex-1"
-                />
-                <AddContactDialog />
-                <CreateGroupDialog />
+      <div className="container mx-auto py-6">
+        <h1 className="text-3xl font-bold mb-6">Chat</h1>
+        
+        <Card className="border rounded-lg shadow-md">
+          <CardContent className="p-0">
+            <div className="grid grid-cols-12 h-[75vh]">
+              {/* Sidebar */}
+              <div className="col-span-4 border-r">
+                <Tabs defaultValue="contacts">
+                  <div className="p-4 border-b">
+                    <TabsList className="w-full">
+                      <TabsTrigger value="contacts" className="flex-1">
+                        <User className="h-4 w-4 mr-2" />
+                        Contacts
+                      </TabsTrigger>
+                      <TabsTrigger value="groups" className="flex-1">
+                        <Users className="h-4 w-4 mr-2" />
+                        Groups
+                      </TabsTrigger>
+                    </TabsList>
+                  </div>
+                  
+                  <TabsContent value="contacts" className="p-0 m-0">
+                    <ScrollArea className="h-[calc(75vh-60px)]">
+                      <div className="p-4 space-y-4">
+                        {loading ? (
+                          Array(5).fill(0).map((_, i) => (
+                            <div key={i} className="flex items-center space-x-4">
+                              <Skeleton className="h-10 w-10 rounded-full" />
+                              <div className="space-y-2">
+                                <Skeleton className="h-4 w-[120px]" />
+                                <Skeleton className="h-3 w-[80px]" />
+                              </div>
+                            </div>
+                          ))
+                        ) : contacts.length === 0 ? (
+                          <div className="text-center py-8 text-gray-500">
+                            <p>No contacts yet</p>
+                            <Button variant="link" className="mt-2">
+                              <UserPlus className="h-4 w-4 mr-2" />
+                              Add new contact
+                            </Button>
+                          </div>
+                        ) : (
+                          contacts.map((contact: ChatContact) => (
+                            <div
+                              key={contact.id}
+                              className={`flex items-center p-3 rounded-lg cursor-pointer ${
+                                activeChat?.id === contact.contact_id ? 'bg-primary/10' : 'hover:bg-gray-100'
+                              }`}
+                              onClick={() => setActiveChat({ id: contact.contact_id, type: 'contact' })}
+                            >
+                              <Avatar className="h-10 w-10 mr-3">
+                                <AvatarImage src={contact.profile.avatar || ''} />
+                                <AvatarFallback>{contact.profile.username?.charAt(0).toUpperCase() || 'U'}</AvatarFallback>
+                              </Avatar>
+                              <div>
+                                <p className="font-medium">{contact.profile.username}</p>
+                                <p className="text-xs text-gray-500">
+                                  {contact.status === 'pending' && (
+                                    <Badge variant="outline" className="text-xs">Pending</Badge>
+                                  )}
+                                </p>
+                              </div>
+                            </div>
+                          ))
+                        )}
+                      </div>
+                    </ScrollArea>
+                  </TabsContent>
+                  
+                  <TabsContent value="groups" className="p-0 m-0">
+                    <div className="p-4 border-b flex justify-between items-center">
+                      <h3 className="text-sm font-medium">Your Groups</h3>
+                      <Button variant="ghost" size="sm" onClick={() => setIsCreatingGroup(true)}>
+                        <Plus className="h-4 w-4 mr-1" />
+                        New Group
+                      </Button>
+                    </div>
+                    <ScrollArea className="h-[calc(75vh-108px)]">
+                      <div className="p-4 space-y-4">
+                        {loading ? (
+                          Array(3).fill(0).map((_, i) => (
+                            <div key={i} className="flex items-center space-x-4">
+                              <Skeleton className="h-10 w-10 rounded-full" />
+                              <div className="space-y-2">
+                                <Skeleton className="h-4 w-[100px]" />
+                                <Skeleton className="h-3 w-[60px]" />
+                              </div>
+                            </div>
+                          ))
+                        ) : groups.length === 0 ? (
+                          <div className="text-center py-8 text-gray-500">
+                            <p>No groups yet</p>
+                            <Button variant="link" className="mt-2" onClick={() => setIsCreatingGroup(true)}>
+                              <Users className="h-4 w-4 mr-2" />
+                              Create a group
+                            </Button>
+                          </div>
+                        ) : (
+                          groups.map((group: ChatGroup) => (
+                            <div
+                              key={group.id}
+                              className={`flex items-center p-3 rounded-lg cursor-pointer ${
+                                activeChat?.id === group.id ? 'bg-primary/10' : 'hover:bg-gray-100'
+                              }`}
+                              onClick={() => setActiveChat({ id: group.id, type: 'group' })}
+                            >
+                              <Avatar className="h-10 w-10 mr-3">
+                                <AvatarImage src={group.avatar || ''} />
+                                <AvatarFallback>{group.name.charAt(0).toUpperCase()}</AvatarFallback>
+                              </Avatar>
+                              <div>
+                                <p className="font-medium">{group.name}</p>
+                                <p className="text-xs text-gray-500">
+                                  {/* Show number of members */}
+                                </p>
+                              </div>
+                            </div>
+                          ))
+                        )}
+                      </div>
+                    </ScrollArea>
+                  </TabsContent>
+                </Tabs>
               </div>
-              <Tabs defaultValue="contacts" className="flex-1 flex flex-col">
-                <TabsList className="grid w-full grid-cols-2 p-3">
-                  <TabsTrigger value="contacts">Contacts</TabsTrigger>
-                  <TabsTrigger value="groups">Groups</TabsTrigger>
-                </TabsList>
-                
-                <TabsContent value="contacts" className="flex-1 overflow-hidden">
-                  <ScrollArea className="h-full">
-                    <div className="p-3 space-y-1">
-                      {loadingContacts ? (
-                        <p className="text-center text-gray-500">Loading contacts...</p>
-                      ) : filteredContacts.length > 0 ? (
-                        filteredContacts.map((contact) => (
-                          <ContactItem key={contact.id} contact={contact} />
-                        ))
-                      ) : (
-                        <p className="text-center text-gray-500">No contacts found</p>
-                      )}
+              
+              {/* Chat Area */}
+              <div className="col-span-8 flex flex-col">
+                {activeChat ? (
+                  <>
+                    <div className="p-4 border-b">
+                      {activeChat.type === 'contact' && 
+                        contacts.find(c => c.contact_id === activeChat.id)?.profile && (
+                          <div className="flex items-center">
+                            <Avatar className="h-8 w-8 mr-2">
+                              <AvatarImage src={contacts.find(c => c.contact_id === activeChat.id)?.profile.avatar || ''} />
+                              <AvatarFallback>
+                                {contacts.find(c => c.contact_id === activeChat.id)?.profile.username?.charAt(0).toUpperCase() || 'U'}
+                              </AvatarFallback>
+                            </Avatar>
+                            <p className="font-medium">{contacts.find(c => c.contact_id === activeChat.id)?.profile.username}</p>
+                          </div>
+                        )
+                      }
+                      {activeChat.type === 'group' && 
+                        groups.find(g => g.id === activeChat.id) && (
+                          <div className="flex items-center">
+                            <Avatar className="h-8 w-8 mr-2">
+                              <AvatarImage src={groups.find(g => g.id === activeChat.id)?.avatar || ''} />
+                              <AvatarFallback>
+                                {groups.find(g => g.id === activeChat.id)?.name.charAt(0).toUpperCase()}
+                              </AvatarFallback>
+                            </Avatar>
+                            <p className="font-medium">{groups.find(g => g.id === activeChat.id)?.name}</p>
+                          </div>
+                        )
+                      }
                     </div>
-                  </ScrollArea>
-                </TabsContent>
-                
-                <TabsContent value="groups" className="flex-1 overflow-hidden">
-                  <ScrollArea className="h-full">
-                    <div className="p-3 space-y-1">
-                      {loadingGroups ? (
-                        <p className="text-center text-gray-500">Loading groups...</p>
-                      ) : filteredGroups.length > 0 ? (
-                        filteredGroups.map((group) => (
-                          <GroupItem key={group.id} group={group} />
-                        ))
-                      ) : (
-                        <p className="text-center text-gray-500">No groups found</p>
-                      )}
+                    
+                    <ScrollArea className="flex-1 p-4">
+                      <div className="space-y-4">
+                        {loading ? (
+                          Array(5).fill(0).map((_, i) => (
+                            <div 
+                              key={i} 
+                              className={`flex ${i % 2 === 0 ? 'justify-start' : 'justify-end'}`}
+                            >
+                              <div className={`flex ${i % 2 === 0 ? 'flex-row' : 'flex-row-reverse'} items-start gap-2 max-w-[80%]`}>
+                                <Skeleton className="h-8 w-8 rounded-full" />
+                                <div>
+                                  <Skeleton className="h-4 w-[60px] mb-1" />
+                                  <Skeleton className={`h-16 w-[240px] rounded-lg`} />
+                                </div>
+                              </div>
+                            </div>
+                          ))
+                        ) : currentMessages.length === 0 ? (
+                          <div className="text-center py-12 text-gray-500">
+                            <p>No messages yet</p>
+                            <p className="text-sm mt-1">Start the conversation!</p>
+                          </div>
+                        ) : (
+                          currentMessages.map((message: MessageWithSender) => {
+                            const isMyMessage = message.sender_id === user?.id;
+                            return (
+                              <div 
+                                key={message.id} 
+                                className={`flex ${isMyMessage ? 'justify-end' : 'justify-start'}`}
+                              >
+                                <div className={`flex ${isMyMessage ? 'flex-row-reverse' : 'flex-row'} items-start gap-2 max-w-[80%]`}>
+                                  <Avatar className="h-8 w-8">
+                                    <AvatarImage src={message.sender?.avatar || ''} />
+                                    <AvatarFallback>
+                                      {message.sender?.username?.charAt(0).toUpperCase() || 'U'}
+                                    </AvatarFallback>
+                                  </Avatar>
+                                  <div>
+                                    <div className="flex items-center gap-2 mb-1">
+                                      <span className="text-xs font-medium">
+                                        {isMyMessage ? 'You' : message.sender?.username}
+                                      </span>
+                                      <span className="text-xs text-gray-500">
+                                        {message.created_at && format(new Date(message.created_at), 'p')}
+                                      </span>
+                                    </div>
+                                    <div className={`p-3 rounded-lg ${
+                                      isMyMessage 
+                                        ? 'bg-primary text-primary-foreground' 
+                                        : 'bg-muted'
+                                    }`}>
+                                      {message.content}
+                                    </div>
+                                  </div>
+                                </div>
+                              </div>
+                            );
+                          })
+                        )}
+                        <div ref={messagesEndRef} />
+                      </div>
+                    </ScrollArea>
+                    
+                    <div className="p-4 border-t">
+                      <form onSubmit={handleSendMessage} className="flex gap-2">
+                        <Input 
+                          placeholder="Type your message..." 
+                          value={inputValue}
+                          onChange={(e) => setInputValue(e.target.value)}
+                          className="flex-1"
+                        />
+                        <Button type="submit" disabled={!inputValue.trim()}>
+                          <Send className="h-4 w-4 mr-2" />
+                          Send
+                        </Button>
+                      </form>
                     </div>
-                  </ScrollArea>
-                </TabsContent>
-              </Tabs>
+                  </>
+                ) : (
+                  <div className="flex items-center justify-center h-full text-center p-8">
+                    <div>
+                      <Users className="h-12 w-12 mx-auto text-gray-400 mb-4" />
+                      <h3 className="text-xl font-medium mb-2">No conversation selected</h3>
+                      <p className="text-gray-500 mb-4">
+                        Choose a contact or group from the sidebar to start chatting
+                      </p>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+      
+      {/* Create Group Dialog */}
+      <Dialog open={isCreatingGroup} onOpenChange={setIsCreatingGroup}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Create New Group</DialogTitle>
+            <DialogDescription>
+              Add a name for your group and select contacts to include
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="space-y-4">
+            <div>
+              <label htmlFor="group-name" className="text-sm font-medium">
+                Group Name
+              </label>
+              <Input 
+                id="group-name" 
+                value={groupName}
+                onChange={(e) => setGroupName(e.target.value)}
+                placeholder="Enter group name"
+              />
             </div>
             
-            {/* Chat Area */}
-            <div className="col-span-9 flex flex-col h-full">
-              {activeChat ? (
-                <>
-                  {/* Chat Header */}
-                  <div className="p-4 border-b flex items-center space-x-3">
-                    <Avatar>
-                      <AvatarImage src="/placeholder.svg" />
-                      <AvatarFallback>?</AvatarFallback>
-                    </Avatar>
-                    <div>
-                      <h3 className="font-medium">
-                        {activeChat.type === 'contact' 
-                          ? contacts.find(c => c.contact_id === activeChat.id)?.profile?.username || 'Contact'
-                          : groups.find(g => g.id === activeChat.id)?.name || 'Group'}
-                      </h3>
+            <div>
+              <label className="text-sm font-medium block mb-2">
+                Select Contacts
+              </label>
+              <ScrollArea className="h-[200px] border rounded-md p-2">
+                <div className="space-y-2">
+                  {contacts.map((contact) => (
+                    <div 
+                      key={contact.id}
+                      className="flex items-center p-2 hover:bg-gray-100 rounded cursor-pointer"
+                      onClick={() => toggleContactSelection(contact.contact_id)}
+                    >
+                      <div className={`w-4 h-4 rounded border mr-2 ${
+                        selectedContacts.includes(contact.contact_id) 
+                          ? 'bg-primary border-primary' 
+                          : 'border-gray-300'
+                      }`}>
+                        {selectedContacts.includes(contact.contact_id) && (
+                          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="#fff">
+                            <path d="M12.207 4.793a1 1 0 010 1.414l-5 5a1 1 0 01-1.414 0l-2-2a1 1 0 011.414-1.414L6.5 9.086l4.293-4.293a1 1 0 011.414 0z" />
+                          </svg>
+                        )}
+                      </div>
+                      <Avatar className="h-8 w-8 mr-2">
+                        <AvatarImage src={contact.profile.avatar || ''} />
+                        <AvatarFallback>{contact.profile.username?.charAt(0).toUpperCase() || 'U'}</AvatarFallback>
+                      </Avatar>
+                      <span>{contact.profile.username}</span>
                     </div>
-                  </div>
-                  
-                  {/* Messages */}
-                  <ScrollArea className="flex-1 p-4">
-                    {loadingMessages ? (
-                      <p className="text-center text-gray-500">Loading messages...</p>
-                    ) : messages.length > 0 ? (
-                      messages.map((message) => (
-                        <MessageBubble key={message.id} message={message} profile={profile} />
-                      ))
-                    ) : (
-                      <p className="text-center text-gray-500">No messages yet. Start the conversation!</p>
-                    )}
-                    <div ref={messagesEndRef} />
-                  </ScrollArea>
-                  
-                  {/* Message Input */}
-                  <div className="p-4 border-t mt-auto">
-                    <form onSubmit={handleSendMessage} className="flex items-center space-x-2">
-                      <Button type="button" variant="outline" size="icon">
-                        <Plus className="h-4 w-4" />
-                      </Button>
-                      <Input
-                        placeholder="Type a message..."
-                        value={messageText}
-                        onChange={(e) => setMessageText(e.target.value)}
-                        className="flex-1"
-                      />
-                      <Button type="submit" size="icon">
-                        <Send className="h-4 w-4" />
-                      </Button>
-                    </form>
-                  </div>
-                </>
-              ) : (
-                <div className="flex items-center justify-center h-full text-gray-500">
-                  <div className="text-center">
-                    <h3 className="text-xl font-medium mb-2">Select a chat to start messaging</h3>
-                    <p>Choose a contact or group from the sidebar</p>
-                  </div>
+                  ))}
                 </div>
-              )}
+              </ScrollArea>
+              <p className="text-xs text-gray-500 mt-1">
+                Selected: {selectedContacts.length} contacts
+              </p>
             </div>
           </div>
-        </Card>
-      </motion.div>
+          
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsCreatingGroup(false)}>
+              Cancel
+            </Button>
+            <Button 
+              onClick={handleCreateGroup}
+              disabled={!groupName || selectedContacts.length === 0}
+            >
+              Create Group
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </PageLayout>
   );
 };
