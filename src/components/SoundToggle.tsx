@@ -8,9 +8,10 @@ const SoundToggle = () => {
   const { isSoundEnabled, toggleSound, playSound } = useSoundContext();
   
   const handleToggle = () => {
-    const isEnabled = toggleSound();
-    // Play the click sound if we're enabling sound
-    if (isEnabled) {
+    toggleSound();
+    
+    // Only play the click sound if sound is enabled after toggling
+    if (isSoundEnabled) {
       playSound('click');
     }
   };
