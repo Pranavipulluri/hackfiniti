@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -7,13 +6,9 @@ import { Trophy } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Profile } from "@/types/supabase-extensions";
 
-type LeaderboardUser = {
-  id: string;
-  username: string;
-  avatar: string;
-  level: number;
-  xp: number;
+type LeaderboardUser = Profile & {
   rank?: number;
 };
 

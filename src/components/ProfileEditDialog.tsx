@@ -6,8 +6,9 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { useProfile, Profile } from "@/hooks/useProfile";
+import { useProfile } from "@/hooks/useProfile";
 import { Loader2 } from "lucide-react";
+import { Profile } from "@/types/supabase-extensions";
 
 interface ProfileEditDialogProps {
   isOpen: boolean;

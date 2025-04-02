@@ -3,17 +3,7 @@ import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
-
-export type Profile = {
-  id: string;
-  username: string;
-  avatar: string;
-  created_at: string;
-  region: string | null;
-  level: number;
-  xp: number;
-  bio: string | null;
-};
+import { Profile } from '@/types/supabase-extensions';
 
 export function useProfile() {
   const { user } = useAuth();
