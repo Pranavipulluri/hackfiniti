@@ -10,35 +10,8 @@ const WorldGlobe = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [loadedTextureCount, setLoadedTextureCount] = useState(0);
   const [highlightedRegion, setHighlightedRegion] = useState<string | null>(null);
-  const totalTextures = 1; // We'll reduce this to just track essential textures
+  const totalTextures = 3; // Earth, bump, and clouds textures
   
-  // Create fallback textures
-  const createFallbackTexture = (color: string = '#1E88E5') => {
-    const canvas = document.createElement('canvas');
-    canvas.width = 1024;
-    canvas.height = 512;
-    const context = canvas.getContext('2d');
-    if (context) {
-      context.fillStyle = color;
-      context.fillRect(0, 0, canvas.width, canvas.height);
-      
-      // For earth texture, create some visible continents
-      if (color === '#1E88E5') { // blue for ocean
-        context.fillStyle = '#4CAF50'; // green for land
-        // Draw basic continent shapes
-        context.beginPath();
-        context.arc(canvas.width * 0.7, canvas.height * 0.4, 80, 0, Math.PI * 2);
-        context.fill();
-        context.beginPath();
-        context.arc(canvas.width * 0.3, canvas.height * 0.5, 120, 0, Math.PI * 2);
-        context.fill();
-      }
-    }
-    
-    const texture = new THREE.CanvasTexture(canvas);
-    return texture;
-  };
-
   useEffect(() => {
     if (!containerRef.current) return;
 
@@ -55,20 +28,36 @@ const WorldGlobe = () => {
     renderer.setPixelRatio(window.devicePixelRatio);
     containerRef.current.appendChild(renderer.domElement);
 
+    // Load manager to track texture loading
+    const loadManager = new THREE.LoadingManager();
+    loadManager.onLoad = () => {
+      setIsLoading(false);
+    };
+    loadManager.onProgress = (url, itemsLoaded, itemsTotal) => {
+      setLoadedTextureCount(itemsLoaded);
+    };
+
     // Add starfield
     const starfield = getStarfield({ numStars: 2000 });
     scene.add(starfield);
 
-    // Create globe with fallback textures
+    // Create globe
     const globeRadius = 5;
     const geometry = new THREE.SphereGeometry(globeRadius, 64, 64);
     
-    // Create fallback textures
-    const earthTexture = createFallbackTexture('#1E88E5');
-    const bumpMap = createFallbackTexture('#555555');
-    const specularMap = createFallbackTexture('#FFFFFF');
+    // Load Earth textures
+    const textureLoader = new THREE.TextureLoader(loadManager);
     
-    // Earth material with fallback textures
+    // Earth texture map (colorful with land and oceans)
+    const earthTexture = textureLoader.load('/lovable-uploads/f55a5bc8-b4e5-446a-9803-84768ce13250.png');
+    
+    // Bump map for terrain
+    const bumpMap = textureLoader.load('https://raw.githubusercontent.com/mrdoob/three.js/master/examples/textures/planets/earth_bumpmap.jpg');
+    
+    // Cloud layer
+    const cloudTexture = textureLoader.load('https://raw.githubusercontent.com/mrdoob/three.js/master/examples/textures/planets/earth_clouds.png');
+    
+    // Earth material with textures
     const material = new THREE.MeshPhongMaterial({
       map: earthTexture,
       bumpMap: bumpMap,
@@ -83,6 +72,18 @@ const WorldGlobe = () => {
     const globe = new THREE.Mesh(geometry, material);
     scene.add(globe);
     
+    // Add cloud layer
+    const cloudGeometry = new THREE.SphereGeometry(globeRadius * 1.01, 64, 64);
+    const cloudMaterial = new THREE.MeshPhongMaterial({
+      map: cloudTexture,
+      transparent: true,
+      opacity: 0.4,
+      side: THREE.DoubleSide,
+    });
+    
+    const clouds = new THREE.Mesh(cloudGeometry, cloudMaterial);
+    scene.add(clouds);
+    
     // Add fresnel effect for atmosphere glow
     const fresenelMat = getFresnelMat({
       rimHex: 0x0099ff,
@@ -91,9 +92,6 @@ const WorldGlobe = () => {
     const atmosphereGeo = new THREE.SphereGeometry(globeRadius * 1.08, 64, 64);
     const atmosphere = new THREE.Mesh(atmosphereGeo, fresenelMat);
     scene.add(atmosphere);
-    
-    // Mark the loading complete since we're using fallback textures
-    setIsLoading(false);
     
     // Add markers for important cultural regions
     const addMarker = (lat, lng, color, size = 0.1) => {
@@ -204,6 +202,11 @@ const WorldGlobe = () => {
       // Update starfield rotation
       starfield.rotation.y = rotation * 0.2;
       
+      // Slowly rotate clouds
+      if (clouds) {
+        clouds.rotation.y += 0.0003;
+      }
+      
       // Pulse the markers
       markers.forEach(({ pulse }) => {
         pulse.scale.setScalar(1 + 0.1 * Math.sin(Date.now() * 0.003));
@@ -241,7 +244,7 @@ const WorldGlobe = () => {
           <div className="flex flex-col items-center">
             <div className="w-16 h-16 border-4 border-t-teal-500 border-teal-200 rounded-full animate-spin"></div>
             <p className="mt-4 text-teal-500 font-semibold">
-              Loading 3D India Globe...
+              Loading 3D India Globe... {Math.round((loadedTextureCount / totalTextures) * 100)}%
             </p>
           </div>
         </div>
