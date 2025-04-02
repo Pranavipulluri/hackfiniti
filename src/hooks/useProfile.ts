@@ -93,3 +93,5 @@ export function useProfile() {
     updateProfile
   };
 }
+
+export type { Profile };

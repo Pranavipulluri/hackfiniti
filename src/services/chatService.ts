@@ -1,6 +1,6 @@
 
 import { supabase } from '@/integrations/supabase/client';
-import { Message, Contact, ChatGroup, GroupMember, Profile, MessageWithSender } from '@/types/supabase-extensions';
+import { Message, Contact, ChatGroup, GroupMember, Profile, MessageWithSender, ChatContact, ChatGroupWithMembers } from '@/types/supabase-extensions';
 
 export const chatService = {
   // Messages
@@ -153,13 +153,33 @@ export const chatService = {
   },
   
   async getGroups(userId: string): Promise<ChatGroupWithMembers[]> {
+    // First get all groups the user is a member of
+    const { data: memberGroups, error: memberError } = await supabase
+      .from('group_members')
+      .select('group_id')
+      .eq('user_id', userId);
+      
+    if (memberError) {
+      console.error('Error fetching member groups:', memberError);
+      return [];
+    }
+    
+    // No groups found
+    if (!memberGroups || memberGroups.length === 0) {
+      return [];
+    }
+    
+    // Extract group IDs
+    const groupIds = memberGroups.map(item => item.group_id);
+    
+    // Fetch the actual groups with members
     const { data, error } = await supabase
       .from('chat_groups')
       .select(`
         *,
         members:group_members(*, profile:user_id(*))
       `)
-      .in('id', supabase.from('group_members').select('group_id').eq('user_id', userId));
+      .in('id', groupIds);
       
     if (error) {
       console.error('Error fetching groups:', error);

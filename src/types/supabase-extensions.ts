@@ -20,3 +20,8 @@ export type ChatContact = Contact & {
 export type ChatGroupWithMembers = ChatGroup & {
   members: (GroupMember & { profile: Profile })[];
 };
+
+// Add this type for the Scoreboard component
+export type LeaderboardUser = Profile & {
+  rank?: number;
+};

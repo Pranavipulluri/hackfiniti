@@ -13,8 +13,9 @@ import { Send, Plus, Search, UserPlus, Users } from 'lucide-react';
 import { format } from 'date-fns';
 import PageLayout from '@/components/PageLayout';
 import { useAuth } from '@/contexts/AuthContext';
-import { useChat, ChatGroup, Contact, Message } from '@/contexts/ChatContext';
-import { useProfile, Profile } from '@/hooks/useProfile';
+import { useChat } from '@/hooks/useChat';
+import { useProfile } from '@/hooks/useProfile';
+import { Profile } from '@/types/supabase-extensions';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 
 const Chat = () => {

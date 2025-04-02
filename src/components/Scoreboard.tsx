@@ -6,11 +6,7 @@ import { Trophy } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Profile } from "@/types/supabase-extensions";
-
-type LeaderboardUser = Profile & {
-  rank?: number;
-};
+import { Profile, LeaderboardUser } from "@/types/supabase-extensions";
 
 const Scoreboard = () => {
   const [leaderboard, setLeaderboard] = useState<LeaderboardUser[]>([]);
@@ -23,7 +19,7 @@ const Scoreboard = () => {
       try {
         const { data, error } = await supabase
           .from('profiles')
-          .select('id, username, avatar, level, xp')
+          .select('id, username, avatar, level, xp, bio, created_at, region')
           .order('xp', { ascending: false })
           .limit(10);
 
@@ -36,7 +32,7 @@ const Scoreboard = () => {
         const rankedData = data.map((user, index) => ({
           ...user,
           rank: index + 1
-        }));
+        })) as LeaderboardUser[];
 
         setLeaderboard(rankedData);
 
@@ -46,7 +42,7 @@ const Scoreboard = () => {
           if (!rankedData.some(item => item.id === user.id)) {
             const { data: userData, error: userError } = await supabase
               .from('profiles')
-              .select('id, username, avatar, level, xp')
+              .select('id, username, avatar, level, xp, bio, created_at, region')
               .eq('id', user.id)
               .single();
 
@@ -61,7 +57,7 @@ const Scoreboard = () => {
                 setUserRank({
                   ...userData,
                   rank: (count || 0) + 1
-                });
+                } as LeaderboardUser);
               }
             }
           } else {
