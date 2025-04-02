@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { Button, ButtonProps } from '@/components/ui/button';
-import { soundManager } from '@/utils/soundUtils';
+import { useSoundContext } from '@/contexts/SoundContext';
 
 interface SoundButtonProps extends ButtonProps {
   soundEffect?: string;
@@ -9,15 +9,22 @@ interface SoundButtonProps extends ButtonProps {
 
 const SoundButton = React.forwardRef<HTMLButtonElement, SoundButtonProps>(
   ({ soundEffect = 'click', onClick, ...props }, ref) => {
+    const { playSound, isSoundEnabled } = useSoundContext();
+    
     const handleClick = (e: React.MouseEvent<HTMLButtonElement>) => {
-      soundManager.playSound(soundEffect);
+      if (isSoundEnabled) {
+        playSound(soundEffect);
+      }
+      
       if (onClick) {
         onClick(e);
       }
     };
 
     const handleMouseEnter = () => {
-      soundManager.playSound('hover');
+      if (isSoundEnabled) {
+        playSound('hover');
+      }
     };
 
     return (

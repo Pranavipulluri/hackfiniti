@@ -1,29 +1,17 @@
 
-import { useState, useEffect } from 'react';
 import { Volume2, VolumeX } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { soundManager } from '@/utils/soundUtils';
 import { motion } from 'framer-motion';
+import { useSoundContext } from '@/contexts/SoundContext';
 
 const SoundToggle = () => {
-  const [isSoundOn, setIsSoundOn] = useState(true);
+  const { isSoundEnabled, toggleSound, playSound } = useSoundContext();
   
-  useEffect(() => {
-    // Start background music when component mounts
-    soundManager.playBgMusic();
-    
-    // Clean up when component unmounts
-    return () => {
-      soundManager.pauseBgMusic();
-    };
-  }, []);
-  
-  const toggleSound = () => {
-    const isEnabled = soundManager.toggleSound();
-    setIsSoundOn(isEnabled);
+  const handleToggle = () => {
+    const isEnabled = toggleSound();
     // Play the click sound if we're enabling sound
     if (isEnabled) {
-      soundManager.playSound('click');
+      playSound('click');
     }
   };
   
@@ -37,10 +25,10 @@ const SoundToggle = () => {
       <Button 
         variant="outline" 
         size="icon" 
-        onClick={toggleSound}
+        onClick={handleToggle}
         className="bg-white/80 backdrop-blur-sm hover:bg-white/90"
       >
-        {isSoundOn ? <Volume2 className="h-5 w-5" /> : <VolumeX className="h-5 w-5" />}
+        {isSoundEnabled ? <Volume2 className="h-5 w-5" /> : <VolumeX className="h-5 w-5" />}
         <span className="sr-only">Toggle sound</span>
       </Button>
     </motion.div>
