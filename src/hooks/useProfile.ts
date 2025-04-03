@@ -22,7 +22,7 @@ export function useProfile() {
     }
     
     const fetchProfile = async () => {
-      setLoading(true);
+      // setLoading(true);
       
       if (isDemoMode) {
         // Create a mock profile for demo mode
