@@ -9,9 +9,10 @@ type AuthContextProps = {
   user: User | null;
   loading: boolean;
   signIn: (username: string, password: string) => Promise<void>;
-  signUp: (username: string, password: string) => Promise<void>;
+  signUp: (username: string, password: string, region?: string) => Promise<void>;
   signOut: () => Promise<void>;
   isDemoMode: boolean;
+  enterDemoMode: (region?: string) => void;
 };
 
 const AuthContext = createContext<AuthContextProps | undefined>(undefined);
@@ -139,7 +140,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
-  const signUp = async (username: string, password: string) => {
+  const signUp = async (username: string, password: string, region?: string) => {
     try {
       // First check network connectivity
       if (!navigator.onLine) {
@@ -202,7 +203,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             throw signInError;
           }
           
-          // Initialize user profile in the database - IMPORTANT: removed the email field
+          // Initialize user profile in the database - No email field
           const { error: profileError } = await supabase
             .from('profiles')
             .upsert({
@@ -211,6 +212,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
               avatar: 'https://api.dicebear.com/7.x/bottts/svg?seed=' + username,
               level: 1,
               xp: 0,
+              region: region || 'Global',
               created_at: new Date().toISOString()
             });
             
@@ -243,6 +245,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
+  const enterDemoMode = (region?: string) => {
+    localStorage.setItem('culturalQuestDemoMode', 'true');
+    localStorage.setItem('demoUserRegion', region || 'Global');
+    setIsDemoMode(true);
+    
+    toast({
+      title: "Demo Mode Activated",
+      description: `You're now exploring CulturalQuest in Demo Mode. Region: ${region || 'Global'}`,
+    });
+  };
+
   const signOut = async () => {
     try {
       setLoading(true);
@@ -251,6 +264,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       if (isDemoMode) {
         // Just clear the demo mode flag
         localStorage.removeItem('culturalQuestDemoMode');
+        localStorage.removeItem('demoUserRegion');
         setIsDemoMode(false);
         
         toast({
@@ -296,6 +310,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         signUp,
         signOut,
         isDemoMode,
+        enterDemoMode,
       }}
     >
       {children}

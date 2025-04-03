@@ -2,7 +2,9 @@
 import { Database } from '@/integrations/supabase/types';
 
 // Extend the existing Database types without modifying the original file
-export type Profile = Database['public']['Tables']['profiles']['Row'];
+export type Profile = Database['public']['Tables']['profiles']['Row'] & {
+  region?: string;
+};
 export type Message = Database['public']['Tables']['messages']['Row'];
 export type Contact = Database['public']['Tables']['contacts']['Row'];
 export type ChatGroup = Database['public']['Tables']['chat_groups']['Row'];

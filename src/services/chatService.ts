@@ -43,7 +43,7 @@ export const chatService = {
   },
   
   // Contacts
-  async getContacts(userId: string): Promise<(Contact & { profile: Profile })[]> {
+  async getContacts(userId: string): Promise<ChatContact[]> {
     const { data, error } = await supabase
       .from('contacts')
       .select(`
@@ -58,7 +58,7 @@ export const chatService = {
       return [];
     }
     
-    return data as unknown as (Contact & { profile: Profile })[];
+    return data as unknown as ChatContact[];
   },
   
   async addContact(userId: string, contactId: string): Promise<Contact | null> {
@@ -225,6 +225,23 @@ export const chatService = {
     }
     
     return data as unknown as MessageWithSender[];
+  },
+
+  // Get users by region
+  async getUsersByRegion(region: string, currentUserId: string): Promise<Profile[]> {
+    const { data, error } = await supabase
+      .from('profiles')
+      .select('*')
+      .eq('region', region)
+      .neq('id', currentUserId)
+      .limit(20);
+      
+    if (error) {
+      console.error('Error fetching users by region:', error);
+      return [];
+    }
+    
+    return data as Profile[];
   },
   
   // Subscriptions

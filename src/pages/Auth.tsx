@@ -12,16 +12,19 @@ import { Toaster } from '@/components/ui/toaster';
 import { AlertCircle, Wifi, WifiOff } from 'lucide-react';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 const Auth = () => {
-  const { signIn, signUp, user, loading } = useAuth();
+  const { signIn, signUp, user, loading, enterDemoMode } = useAuth();
   const navigate = useNavigate();
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
+  const [region, setRegion] = useState('Global');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [networkStatus, setNetworkStatus] = useState<boolean>(navigator.onLine);
   const [showDemoDialog, setShowDemoDialog] = useState(false);
+  const [demoRegion, setDemoRegion] = useState('Global');
 
   // Check for online status
   useEffect(() => {
@@ -95,7 +98,7 @@ const Auth = () => {
     clearError();
     try {
       setIsSubmitting(true);
-      await signUp(username, password);
+      await signUp(username, password, region);
       // The signUp function now handles the sign in automatically
       // Redirection will be handled by the useEffect above
     } catch (error: any) {
@@ -110,13 +113,29 @@ const Auth = () => {
     }
   };
 
-  const enterDemoMode = () => {
-    // Store demo mode flag in localStorage
-    localStorage.setItem('culturalQuestDemoMode', 'true');
+  const handleEnterDemoMode = () => {
+    // Store demo mode flag in localStorage with region
+    enterDemoMode(demoRegion);
     // Redirect to home page
     navigate('/');
     setShowDemoDialog(false);
   };
+
+  // List of regions
+  const regions = [
+    'Global',
+    'Kerala',
+    'Tamil Nadu',
+    'Karnataka',
+    'Andhra Pradesh',
+    'Telangana',
+    'Maharashtra',
+    'Gujarat',
+    'Rajasthan',
+    'Punjab',
+    'Delhi',
+    'West Bengal'
+  ];
 
   return (
     <motion.div
@@ -225,6 +244,23 @@ const Auth = () => {
                   />
                   <p className="text-xs text-gray-500">Password must be at least 6 characters long</p>
                 </div>
+                <div className="space-y-2">
+                  <Label htmlFor="region">Your Region</Label>
+                  <Select 
+                    value={region} 
+                    onValueChange={setRegion}
+                  >
+                    <SelectTrigger id="region">
+                      <SelectValue placeholder="Select your region" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {regions.map((r) => (
+                        <SelectItem key={r} value={r}>{r}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <p className="text-xs text-gray-500">You'll be connected with people from your region</p>
+                </div>
                 <Button 
                   type="submit" 
                   className="w-full"
@@ -260,11 +296,28 @@ const Auth = () => {
               Your progress won't be saved and some features may be limited.
             </DialogDescription>
           </DialogHeader>
+          <div className="py-4">
+            <Label htmlFor="demo-region">Select Region for Demo</Label>
+            <Select 
+              value={demoRegion} 
+              onValueChange={setDemoRegion}
+            >
+              <SelectTrigger id="demo-region" className="mt-2">
+                <SelectValue placeholder="Select your region" />
+              </SelectTrigger>
+              <SelectContent>
+                {regions.map((r) => (
+                  <SelectItem key={r} value={r}>{r}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <p className="text-xs text-gray-500 mt-1">This will help connect you with virtual travelers in this region</p>
+          </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setShowDemoDialog(false)}>
               Cancel
             </Button>
-            <Button onClick={enterDemoMode}>
+            <Button onClick={handleEnterDemoMode}>
               Continue to Demo
             </Button>
           </DialogFooter>

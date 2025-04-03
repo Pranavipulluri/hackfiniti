@@ -6,7 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
-import { User, UserPlus, Users, Send, Plus } from 'lucide-react';
+import { User, UserPlus, Users, Send, Plus, Map, Search } from 'lucide-react';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -14,13 +14,12 @@ import { format } from 'date-fns';
 import PageLayout from '@/components/PageLayout';
 import { useAuth } from '@/contexts/AuthContext';
 import { useChat } from '@/hooks/useChat';
-import { useProfile } from '@/hooks/useProfile';
-import { ChatContact, ChatGroup, Contact, MessageWithSender } from '@/types/supabase-extensions';
+import { ChatContact, ChatGroup, MessageWithSender } from '@/types/supabase-extensions';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { useToast } from '@/hooks/use-toast';
 
 const Chat = () => {
-  const { user } = useAuth();
-  const { profile } = useProfile();
+  const { user, isDemoMode } = useAuth();
   const {
     contacts,
     groups,
@@ -29,11 +28,18 @@ const Chat = () => {
     activeChat,
     setActiveChat,
     sendMessage,
-    createGroup
+    createGroup,
+    addContact,
+    regionUsers,
+    loadRegionUsers,
+    loadingRegionUsers,
+    userRegion
   } = useChat();
+  const { toast } = useToast();
   
   const [inputValue, setInputValue] = useState('');
   const [isCreatingGroup, setIsCreatingGroup] = useState(false);
+  const [showRegionUsers, setShowRegionUsers] = useState(false);
   const [groupName, setGroupName] = useState('');
   const [selectedContacts, setSelectedContacts] = useState<string[]>([]);
   
@@ -72,6 +78,28 @@ const Chat = () => {
     }
   };
   
+  const handleFindPeopleClick = () => {
+    setShowRegionUsers(true);
+    loadRegionUsers();
+  };
+  
+  const handleAddContact = async (contactId: string) => {
+    try {
+      await addContact(contactId);
+      toast({
+        title: "Contact Request Sent",
+        description: "Your contact request has been sent. They'll need to accept it to start chatting.",
+      });
+    } catch (error) {
+      console.error('Error adding contact:', error);
+      toast({
+        title: "Error",
+        description: "Failed to send contact request. Please try again.",
+        variant: "destructive",
+      });
+    }
+  };
+  
   const toggleContactSelection = (contactId: string) => {
     if (selectedContacts.includes(contactId)) {
       setSelectedContacts(prev => prev.filter(id => id !== contactId));
@@ -105,7 +133,21 @@ const Chat = () => {
                   </div>
                   
                   <TabsContent value="contacts" className="p-0 m-0">
-                    <ScrollArea className="h-[calc(75vh-60px)]">
+                    <div className="p-4 flex justify-between items-center">
+                      <div className="flex items-center">
+                        <Map className="h-4 w-4 mr-2 text-teal-600" />
+                        <span className="text-sm font-medium">{userRegion}</span>
+                      </div>
+                      <Button 
+                        variant="outline" 
+                        size="sm" 
+                        onClick={handleFindPeopleClick}
+                      >
+                        <Search className="h-4 w-4 mr-1" />
+                        Find People
+                      </Button>
+                    </div>
+                    <ScrollArea className="h-[calc(75vh-108px)]">
                       <div className="p-4 space-y-4">
                         {loading ? (
                           Array(5).fill(0).map((_, i) => (
@@ -120,9 +162,9 @@ const Chat = () => {
                         ) : contacts.length === 0 ? (
                           <div className="text-center py-8 text-gray-500">
                             <p>No contacts yet</p>
-                            <Button variant="link" className="mt-2">
+                            <Button variant="link" className="mt-2" onClick={handleFindPeopleClick}>
                               <UserPlus className="h-4 w-4 mr-2" />
-                              Add new contact
+                              Find people in your region
                             </Button>
                           </div>
                         ) : (
@@ -140,11 +182,17 @@ const Chat = () => {
                               </Avatar>
                               <div>
                                 <p className="font-medium">{contact.profile.username}</p>
-                                <p className="text-xs text-gray-500">
-                                  {contact.status === 'pending' && (
-                                    <Badge variant="outline" className="text-xs">Pending</Badge>
+                                <div className="flex items-center text-xs text-gray-500">
+                                  {contact.profile.region && (
+                                    <>
+                                      <Map className="h-3 w-3 mr-1" />
+                                      <span>{contact.profile.region}</span>
+                                    </>
                                   )}
-                                </p>
+                                  {contact.status === 'pending' && (
+                                    <Badge variant="outline" className="text-xs ml-2">Pending</Badge>
+                                  )}
+                                </div>
                               </div>
                             </div>
                           ))
@@ -223,7 +271,13 @@ const Chat = () => {
                                 {contacts.find(c => c.contact_id === activeChat.id)?.profile.username?.charAt(0).toUpperCase() || 'U'}
                               </AvatarFallback>
                             </Avatar>
-                            <p className="font-medium">{contacts.find(c => c.contact_id === activeChat.id)?.profile.username}</p>
+                            <div>
+                              <p className="font-medium">{contacts.find(c => c.contact_id === activeChat.id)?.profile.username}</p>
+                              <div className="flex items-center text-xs text-gray-500">
+                                <Map className="h-3 w-3 mr-1" />
+                                <span>{contacts.find(c => c.contact_id === activeChat.id)?.profile.region || 'Global'}</span>
+                              </div>
+                            </div>
                           </div>
                         )
                       }
@@ -266,7 +320,9 @@ const Chat = () => {
                           </div>
                         ) : (
                           currentMessages.map((message: MessageWithSender) => {
-                            const isMyMessage = message.sender_id === user?.id;
+                            const isMyMessage = isDemoMode 
+                              ? message.sender_id === 'demo-user'
+                              : message.sender_id === user?.id;
                             return (
                               <div 
                                 key={message.id} 
@@ -328,6 +384,16 @@ const Chat = () => {
                       <p className="text-gray-500 mb-4">
                         Choose a contact or group from the sidebar to start chatting
                       </p>
+                      <div className="flex justify-center gap-2">
+                        <Button variant="outline" onClick={handleFindPeopleClick}>
+                          <Search className="h-4 w-4 mr-2" />
+                          Find People in {userRegion}
+                        </Button>
+                        <Button variant="outline" onClick={() => setIsCreatingGroup(true)}>
+                          <Plus className="h-4 w-4 mr-2" />
+                          Create Group
+                        </Button>
+                      </div>
                     </div>
                   </div>
                 )}
@@ -407,6 +473,82 @@ const Chat = () => {
               disabled={!groupName || selectedContacts.length === 0}
             >
               Create Group
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+      
+      {/* Find People Dialog */}
+      <Dialog open={showRegionUsers} onOpenChange={setShowRegionUsers}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>People in {userRegion}</DialogTitle>
+            <DialogDescription>
+              Connect with other travelers and locals in your region
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="py-2">
+            {loadingRegionUsers ? (
+              <div className="space-y-4">
+                {Array(5).fill(0).map((_, i) => (
+                  <div key={i} className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <Skeleton className="h-10 w-10 rounded-full" />
+                      <div>
+                        <Skeleton className="h-4 w-[150px] mb-1" />
+                        <Skeleton className="h-3 w-[100px]" />
+                      </div>
+                    </div>
+                    <Skeleton className="h-9 w-[100px]" />
+                  </div>
+                ))}
+              </div>
+            ) : regionUsers.length === 0 ? (
+              <div className="text-center py-6">
+                <p className="text-gray-500">No users found in {userRegion}</p>
+                <p className="text-sm text-gray-400 mt-1">Be the first to explore this region!</p>
+              </div>
+            ) : (
+              <ScrollArea className="h-[300px] pr-4">
+                <div className="space-y-4">
+                  {regionUsers.map((user) => (
+                    <div key={user.id} className="flex items-center justify-between">
+                      <div className="flex items-center gap-3">
+                        <Avatar>
+                          <AvatarImage src={user.avatar} />
+                          <AvatarFallback>{user.username?.charAt(0).toUpperCase()}</AvatarFallback>
+                        </Avatar>
+                        <div>
+                          <p className="font-medium">{user.username}</p>
+                          <div className="flex items-center text-xs text-gray-500">
+                            <Map className="h-3 w-3 mr-1" />
+                            <span>{user.region || userRegion}</span>
+                          </div>
+                        </div>
+                      </div>
+                      <Button 
+                        size="sm" 
+                        variant="outline" 
+                        onClick={() => handleAddContact(user.id)}
+                      >
+                        <UserPlus className="h-4 w-4 mr-1" />
+                        Connect
+                      </Button>
+                    </div>
+                  ))}
+                </div>
+              </ScrollArea>
+            )}
+          </div>
+          
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowRegionUsers(false)}>
+              Close
+            </Button>
+            <Button onClick={loadRegionUsers} disabled={loadingRegionUsers}>
+              <Search className="h-4 w-4 mr-1" />
+              Refresh List
             </Button>
           </DialogFooter>
         </DialogContent>

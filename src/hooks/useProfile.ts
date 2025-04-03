@@ -6,13 +6,13 @@ import { useToast } from '@/hooks/use-toast';
 import { Profile } from '@/types/supabase-extensions';
 
 export function useProfile() {
-  const { user } = useAuth();
+  const { user, isDemoMode } = useAuth();
   const [profile, setProfile] = useState<Profile | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
   const { toast } = useToast();
 
   useEffect(() => {
-    if (!user) {
+    if (!user && !isDemoMode) {
       setProfile(null);
       setLoading(false);
       return;
@@ -20,11 +20,31 @@ export function useProfile() {
     
     const fetchProfile = async () => {
       setLoading(true);
+      
+      if (isDemoMode) {
+        // Create a mock profile for demo mode
+        const demoRegion = localStorage.getItem('demoUserRegion') || 'Global';
+        const demoProfile: Profile = {
+          id: 'demo-user',
+          username: 'Demo User',
+          avatar: 'https://api.dicebear.com/7.x/bottts/svg?seed=demouser',
+          level: 1,
+          xp: 0,
+          region: demoRegion,
+          created_at: new Date().toISOString(),
+          bio: 'This is a demo account exploring CulturalQuest.',
+        } as Profile;
+        
+        setProfile(demoProfile);
+        setLoading(false);
+        return;
+      }
+      
       try {
         const { data, error } = await supabase
           .from('profiles')
           .select('*')
-          .eq('id', user.id)
+          .eq('id', user!.id)
           .single();
           
         if (error) {
@@ -43,22 +63,47 @@ export function useProfile() {
     fetchProfile();
     
     // Set up a realtime subscription to profile changes
-    const channel = supabase
-      .channel('profile-changes')
-      .on('postgres_changes', 
-        { event: 'UPDATE', schema: 'public', table: 'profiles', filter: `id=eq.${user.id}` }, 
-        (payload) => {
-          setProfile(payload.new as Profile);
-        }
-      )
-      .subscribe();
-      
-    return () => {
-      supabase.removeChannel(channel);
-    };
-  }, [user]);
+    if (user) {
+      const channel = supabase
+        .channel('profile-changes')
+        .on('postgres_changes', 
+          { event: 'UPDATE', schema: 'public', table: 'profiles', filter: `id=eq.${user.id}` }, 
+          (payload) => {
+            setProfile(payload.new as Profile);
+          }
+        )
+        .subscribe();
+        
+      return () => {
+        supabase.removeChannel(channel);
+      };
+    }
+  }, [user, isDemoMode]);
   
   const updateProfile = async (updates: Partial<Profile>) => {
+    if (isDemoMode) {
+      // In demo mode, we just update the local state
+      setProfile(prev => {
+        if (!prev) return null;
+        return {
+          ...prev,
+          ...updates,
+        };
+      });
+      
+      // If updating region, store in localStorage
+      if (updates.region) {
+        localStorage.setItem('demoUserRegion', updates.region);
+      }
+      
+      toast({
+        title: "Profile updated (Demo)",
+        description: "Your profile has been updated in demo mode. Note that changes won't persist after you leave.",
+      });
+      
+      return;
+    }
+    
     if (!user) return;
     
     try {
@@ -93,5 +138,3 @@ export function useProfile() {
     updateProfile
   };
 }
-
-export type { Profile };
