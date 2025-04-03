@@ -15,7 +15,7 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 const Auth = () => {
-  const { signIn, signUp, user, loading, enterDemoMode } = useAuth();
+  const { signIn, signUp, user, loading, enterDemoMode, isDemoMode } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
   const [username, setUsername] = useState('');
@@ -48,12 +48,12 @@ const Auth = () => {
     };
   }, [location]);
 
-  // If user is already logged in, redirect to the intended page or profile
+  // If user is already logged in or in demo mode, redirect to the intended page or profile
   useEffect(() => {
-    if (user && !loading) {
+    if ((user || isDemoMode) && !loading) {
       navigate(redirectPath);
     }
-  }, [user, loading, navigate, redirectPath]);
+  }, [user, loading, navigate, redirectPath, isDemoMode]);
 
   const clearError = () => setError(null);
 
@@ -73,14 +73,15 @@ const Auth = () => {
     try {
       setIsSubmitting(true);
       await signIn(username, password);
-      // On successful sign in, the useEffect will handle redirection
+      // After successful sign-in, redirect to profile
+      navigate('/profile');
     } catch (error: any) {
       console.error('Sign in error:', error);
       if (error.message === 'Failed to fetch') {
         setError('Network error. Please check your internet connection and try again.');
       } else if (error.message === 'Email not confirmed') {
-        // This should be handled in the AuthContext now
-        setError('Your email is not confirmed. For the demo, try using Demo Mode instead.');
+        // This should be handled in the AuthContext now with auto-confirmation
+        setError('Email confirmation issue. We\'re trying alternative authentication methods.');
       } else {
         setError('Failed to sign in. Please check your credentials.');
       }
@@ -110,16 +111,15 @@ const Auth = () => {
     try {
       setIsSubmitting(true);
       await signUp(username, password, region);
-      // The signUp function now handles demo mode if email confirmation fails
-      // It will also automatically sign in the user if possible
-      // Redirection is handled by the useEffect above
+      // Explicitly navigate to profile after signup
+      navigate('/profile');
     } catch (error: any) {
       console.error('Sign up error:', error);
       if (error.message === 'Failed to fetch') {
         setError('Network error. Please check your internet connection and try again.');
       } else if (error.message === 'Email not confirmed') {
-        // This should be handled by the AuthContext now
-        setError('Email confirmation is required. For this demo, try using Demo Mode instead.');
+        // This should be handled in the AuthContext now with auto-confirmation
+        setError('Email confirmation issue. Using alternative authentication methods.');
       } else {
         setError('Failed to create account. Please try a different username or check your internet connection.');
       }
