@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -17,6 +17,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 const Auth = () => {
   const { signIn, signUp, user, loading, enterDemoMode } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [region, setRegion] = useState('Global');
@@ -25,6 +26,7 @@ const Auth = () => {
   const [networkStatus, setNetworkStatus] = useState<boolean>(navigator.onLine);
   const [showDemoDialog, setShowDemoDialog] = useState(false);
   const [demoRegion, setDemoRegion] = useState('Global');
+  const [redirectPath, setRedirectPath] = useState<string>('/profile');
 
   // Check for online status
   useEffect(() => {
@@ -34,18 +36,24 @@ const Auth = () => {
     window.addEventListener('online', handleOnline);
     window.addEventListener('offline', handleOffline);
 
+    // Get redirect path from location state if available
+    const from = location.state?.from?.pathname;
+    if (from) {
+      setRedirectPath(from);
+    }
+
     return () => {
       window.removeEventListener('online', handleOnline);
       window.removeEventListener('offline', handleOffline);
     };
-  }, []);
+  }, [location]);
 
-  // If user is already logged in, redirect to home
+  // If user is already logged in, redirect to the intended page or profile
   useEffect(() => {
     if (user && !loading) {
-      navigate('/');
+      navigate(redirectPath);
     }
-  }, [user, loading, navigate]);
+  }, [user, loading, navigate, redirectPath]);
 
   const clearError = () => setError(null);
 
@@ -65,11 +73,14 @@ const Auth = () => {
     try {
       setIsSubmitting(true);
       await signIn(username, password);
-      // Redirection will be handled by the useEffect above
+      // On successful sign in, the useEffect will handle redirection
     } catch (error: any) {
       console.error('Sign in error:', error);
       if (error.message === 'Failed to fetch') {
         setError('Network error. Please check your internet connection and try again.');
+      } else if (error.message === 'Email not confirmed') {
+        // This should be handled in the AuthContext now
+        setError('Your email is not confirmed. For the demo, try using Demo Mode instead.');
       } else {
         setError('Failed to sign in. Please check your credentials.');
       }
@@ -99,12 +110,16 @@ const Auth = () => {
     try {
       setIsSubmitting(true);
       await signUp(username, password, region);
-      // The signUp function now handles the sign in automatically
-      // Redirection will be handled by the useEffect above
+      // The signUp function now handles demo mode if email confirmation fails
+      // It will also automatically sign in the user if possible
+      // Redirection is handled by the useEffect above
     } catch (error: any) {
       console.error('Sign up error:', error);
       if (error.message === 'Failed to fetch') {
         setError('Network error. Please check your internet connection and try again.');
+      } else if (error.message === 'Email not confirmed') {
+        // This should be handled by the AuthContext now
+        setError('Email confirmation is required. For this demo, try using Demo Mode instead.');
       } else {
         setError('Failed to create account. Please try a different username or check your internet connection.');
       }
@@ -116,8 +131,8 @@ const Auth = () => {
   const handleEnterDemoMode = () => {
     // Store demo mode flag in localStorage with region
     enterDemoMode(demoRegion);
-    // Redirect to home page
-    navigate('/');
+    // Redirect to profile page
+    navigate('/profile');
     setShowDemoDialog(false);
   };
 
@@ -210,7 +225,7 @@ const Auth = () => {
                 <Button 
                   type="submit" 
                   className="w-full"
-                  disabled={isSubmitting || loading || !networkStatus}
+                  disabled={isSubmitting || loading}
                 >
                   {isSubmitting ? 'Signing in...' : 'Sign In'}
                 </Button>
@@ -264,7 +279,7 @@ const Auth = () => {
                 <Button 
                   type="submit" 
                   className="w-full"
-                  disabled={isSubmitting || loading || !networkStatus}
+                  disabled={isSubmitting || loading}
                 >
                   {isSubmitting ? 'Creating Account...' : 'Create Account'}
                 </Button>

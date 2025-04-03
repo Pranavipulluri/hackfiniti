@@ -39,21 +39,48 @@ function App() {
                     <Routes>
                       <Route path="/" element={<Index />} />
                       <Route path="/about" element={<About />} />
-                      <Route path="/create-character" element={<CreateCharacter />} />
+                      <Route 
+                        path="/create-character" 
+                        element={
+                          <ProtectedRoute>
+                            <CreateCharacter />
+                          </ProtectedRoute>
+                        } 
+                      />
                       <Route path="/welcome" element={<WelcomePage />} />
-                      <Route path="/profile" element={
-                        <ProtectedRoute>
-                          <Profile />
-                        </ProtectedRoute>
-                      } />
+                      <Route 
+                        path="/profile" 
+                        element={
+                          <ProtectedRoute>
+                            <Profile />
+                          </ProtectedRoute>
+                        } 
+                      />
                       <Route path="/marketplace" element={<Marketplace />} />
-                      <Route path="/chat" element={
-                        <ProtectedRoute>
-                          <Chat />
-                        </ProtectedRoute>
-                      } />
-                      <Route path="/exploration" element={<Exploration />} />
-                      <Route path="/mini-games" element={<MiniGames />} />
+                      <Route 
+                        path="/chat" 
+                        element={
+                          <ProtectedRoute>
+                            <Chat />
+                          </ProtectedRoute>
+                        } 
+                      />
+                      <Route 
+                        path="/exploration" 
+                        element={
+                          <ProtectedRoute>
+                            <Exploration />
+                          </ProtectedRoute>
+                        } 
+                      />
+                      <Route 
+                        path="/mini-games" 
+                        element={
+                          <ProtectedRoute>
+                            <MiniGames />
+                          </ProtectedRoute>
+                        } 
+                      />
                       <Route path="/auth" element={<Auth />} />
                       <Route path="*" element={<NotFound />} />
                     </Routes>
