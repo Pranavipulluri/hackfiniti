@@ -20,6 +20,7 @@ import WelcomePage from "./pages/WelcomePage";
 import Auth from "./pages/Auth";
 import { ThemeProvider } from "next-themes";
 import { SoundProvider } from "@/contexts/SoundContext";
+import ProtectedRoute from "./components/ProtectedRoute";
 
 const queryClient = new QueryClient();
 
@@ -40,9 +41,17 @@ function App() {
                       <Route path="/about" element={<About />} />
                       <Route path="/create-character" element={<CreateCharacter />} />
                       <Route path="/welcome" element={<WelcomePage />} />
-                      <Route path="/profile" element={<Profile />} />
+                      <Route path="/profile" element={
+                        <ProtectedRoute>
+                          <Profile />
+                        </ProtectedRoute>
+                      } />
                       <Route path="/marketplace" element={<Marketplace />} />
-                      <Route path="/chat" element={<Chat />} />
+                      <Route path="/chat" element={
+                        <ProtectedRoute>
+                          <Chat />
+                        </ProtectedRoute>
+                      } />
                       <Route path="/exploration" element={<Exploration />} />
                       <Route path="/mini-games" element={<MiniGames />} />
                       <Route path="/auth" element={<Auth />} />

@@ -3,7 +3,7 @@ import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
-import { Profile } from '@/types/supabase-extensions';
+import type { Profile } from '@/types/supabase-extensions';
 
 // Use type-only export for re-exporting types
 export type { Profile };

@@ -4,6 +4,7 @@ import { motion } from "framer-motion";
 import { Home, User, ShoppingBag, MessageCircle, Globe, Gamepad, Info, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import AuthStatus from "./AuthStatus";
 
 const NavigationBar = () => {
   const location = useLocation();
@@ -60,28 +61,32 @@ const NavigationBar = () => {
             })}
           </div>
           
-          <div className="md:hidden flex items-center">
-            <Button 
-              variant="outline" 
-              size="icon"
-              className="border-orange-500/50 text-orange-400 hover:bg-slate-800"
-            >
-              <span className="sr-only">Toggle menu</span>
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                fill="none"
-                viewBox="0 0 24 24"
-                strokeWidth={1.5}
-                stroke="currentColor"
-                className="w-6 h-6"
+          <div className="flex items-center gap-2">
+            <AuthStatus />
+            
+            <div className="md:hidden">
+              <Button 
+                variant="outline" 
+                size="icon"
+                className="border-orange-500/50 text-orange-400 hover:bg-slate-800"
               >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5"
-                />
-              </svg>
-            </Button>
+                <span className="sr-only">Toggle menu</span>
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  strokeWidth={1.5}
+                  stroke="currentColor"
+                  className="w-6 h-6"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5"
+                  />
+                </svg>
+              </Button>
+            </div>
           </div>
         </div>
       </div>
