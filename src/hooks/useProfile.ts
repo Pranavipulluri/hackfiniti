@@ -5,6 +5,8 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
 import { Profile } from '@/types/supabase-extensions';
 
+export { Profile };
+
 export function useProfile() {
   const { user, isDemoMode } = useAuth();
   const [profile, setProfile] = useState<Profile | null>(null);
@@ -49,6 +51,32 @@ export function useProfile() {
           
         if (error) {
           console.error('Error fetching profile:', error);
+          // If profile doesn't exist, let's create one
+          if (error.code === 'PGRST116') {
+            const newProfile: Partial<Profile> = {
+              id: user!.id,
+              username: user!.user_metadata?.username || 'User',
+              avatar: `https://api.dicebear.com/7.x/bottts/svg?seed=${user!.id}`,
+              level: 1,
+              xp: 0,
+              region: 'Global',
+              bio: ''
+            };
+            
+            const { data: createdProfile, error: createError } = await supabase
+              .from('profiles')
+              .insert(newProfile)
+              .select()
+              .single();
+              
+            if (createError) {
+              console.error('Error creating profile:', createError);
+            } else {
+              setProfile(createdProfile as Profile);
+              setLoading(false);
+              return;
+            }
+          }
           return;
         }
         

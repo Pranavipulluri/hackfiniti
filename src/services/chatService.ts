@@ -246,6 +246,7 @@ export const chatService = {
   
   // Subscriptions
   subscribeToMessages(userId: string, callback: (message: Message) => void) {
+    // Fix for group messages subscription
     return supabase
       .channel('messages-channel')
       .on('postgres_changes', 
@@ -264,7 +265,7 @@ export const chatService = {
           event: 'INSERT', 
           schema: 'public', 
           table: 'messages',
-          filter: `group_id=in.(${supabase.from('group_members').select('group_id').eq('user_id', userId).toString()})` 
+          filter: `group_id=in.(select group_id from group_members where user_id='${userId}')` 
         }, 
         payload => {
           callback(payload.new as Message);

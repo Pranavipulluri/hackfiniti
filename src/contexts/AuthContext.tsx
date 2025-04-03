@@ -213,7 +213,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
               level: 1,
               xp: 0,
               region: region || 'Global',
-              created_at: new Date().toISOString()
+              created_at: new Date().toISOString(),
+              bio: 'Hello! I\'m new to CulturalQuest.' // Added default bio
             });
             
           if (profileError) {
