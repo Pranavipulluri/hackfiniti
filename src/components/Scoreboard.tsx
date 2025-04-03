@@ -1,3 +1,4 @@
+
 import { useEffect, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -6,7 +7,7 @@ import { Trophy } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Profile, LeaderboardUser } from "@/types/supabase-extensions";
+import type { Profile, LeaderboardUser } from "@/types/supabase-extensions";
 
 const Scoreboard = () => {
   const [leaderboard, setLeaderboard] = useState<LeaderboardUser[]>([]);

@@ -5,7 +5,8 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
 import { Profile } from '@/types/supabase-extensions';
 
-export { Profile };
+// Use type-only export for re-exporting types
+export type { Profile };
 
 export function useProfile() {
   const { user, isDemoMode } = useAuth();
@@ -53,7 +54,8 @@ export function useProfile() {
           console.error('Error fetching profile:', error);
           // If profile doesn't exist, let's create one
           if (error.code === 'PGRST116') {
-            const newProfile: Partial<Profile> = {
+            // Make sure id is required since it's a primary key
+            const newProfile = {
               id: user!.id,
               username: user!.user_metadata?.username || 'User',
               avatar: `https://api.dicebear.com/7.x/bottts/svg?seed=${user!.id}`,
