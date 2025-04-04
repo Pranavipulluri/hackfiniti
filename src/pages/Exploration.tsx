@@ -34,7 +34,7 @@ const Exploration = () => {
               <div className="bg-slate-900/80 p-4 border-b border-teal-500/20 flex justify-between items-center">
                 <div className="flex items-center">
                   <MapIcon className="h-6 w-6 text-teal-400 mr-3" />
-                  <h2 className="text-xl font-bold text-white">Kerala Explorer</h2>
+                  <h2 className="text-xl font-bold text-white">Kerela Explorer</h2>
                 </div>
                 <Button 
                   variant="ghost" 
