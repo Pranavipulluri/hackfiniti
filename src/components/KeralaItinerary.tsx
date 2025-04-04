@@ -1,67 +1,67 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, MapPin, TreePalm, Image, Gamepad, Waves } from "lucide-react";
+import { ArrowLeft, MapPin, TreePalm, Image, Gamepad, Waves, ChevronLeft, ChevronRight, Flag } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "sonner";
 
-const MAP_WIDTH = 1000;  
-const MAP_HEIGHT = 1000; 
+const MAP_WIDTH = 1000;
+const MAP_HEIGHT = 1000;
 const CHARACTER_SIZE = 24;
 
 const landmarks = [
-  { 
-    id: 1, 
-    name: "Village Center", 
-    x: 520, 
-    y: 420, 
+  {
+    id: 1,
+    name: "Village Center",
+    x: 520,
+    y: 420,
     description: "The central hub of the village with various services and shops.",
     image: "https://images.unsplash.com/photo-1482938289607-e9573fc25ebb?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=500&q=80"
   },
-  { 
-    id: 2, 
-    name: "Forest Path", 
-    x: 300, 
-    y: 150, 
+  {
+    id: 2,
+    name: "Forest Path",
+    x: 300,
+    y: 150,
     description: "A winding path through the dense green forest.",
     image: "https://images.unsplash.com/photo-1487958449943-2429e8be8625?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=500&q=80"
   },
-  { 
-    id: 3, 
-    name: "Farm House", 
-    x: 700, 
-    y: 200, 
+  {
+    id: 3,
+    name: "Farm House",
+    x: 700,
+    y: 200,
     description: "A local farm with crops and animals.",
     image: "https://images.unsplash.com/photo-1426604966848-d7adac402bff?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=500&q=80"
   },
-  { 
-    id: 4, 
-    name: "Town Square", 
-    x: 400, 
-    y: 600, 
+  {
+    id: 4,
+    name: "Town Square",
+    x: 400,
+    y: 600,
     description: "The main gathering place for villagers and visitors.",
     image: "https://images.unsplash.com/photo-1509316975850-ff9c5deb0cd9?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=500&q=80"
   },
-  { 
-    id: 5, 
-    name: "Pond", 
-    x: 600, 
-    y: 700, 
+  {
+    id: 5,
+    name: "Pond",
+    x: 600,
+    y: 700,
     description: "A serene water body surrounded by greenery.",
     image: "https://images.unsplash.com/photo-1466442929976-97f336a657be?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=500&q=80"
   },
-  { 
-    id: 6, 
-    name: "Garden Path", 
-    x: 200, 
-    y: 400, 
+  {
+    id: 6,
+    name: "Garden Path",
+    x: 200,
+    y: 400,
     description: "A beautiful pathway lined with colorful flowers.",
     image: "https://images.unsplash.com/photo-1501854140801-50d01698950b?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=500&q=80"
   },
-  { 
-    id: 7, 
-    name: "Market", 
-    x: 800, 
-    y: 500, 
+  {
+    id: 7,
+    name: "Market",
+    x: 800,
+    y: 500,
     description: "A bustling marketplace with local vendors.",
     image: "https://images.unsplash.com/photo-1472396961693-142e6e269027?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=500&q=80"
   }
@@ -95,6 +95,13 @@ const miniGames = [
     x: 600,
     y: 250,
     description: "Help gather crops from the local farm.",
+  },
+  {
+    id: 5,
+    name: "Boat Race",
+    x: 650,
+    y: 620,
+    description: "Race traditional boats through the Kerala backwaters.",
   }
 ];
 
@@ -116,7 +123,19 @@ const KeralaItinerary = () => {
   const [mapPosition, setMapPosition] = useState({ x: 0, y: 0 });
   const [isDragging, setIsDragging] = useState(false);
   const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
-  
+  const [boatRaceState, setBoatRaceState] = useState({
+    started: false,
+    playerPosition: 0,
+    aiPosition: 0,
+    countdown: 3,
+    finished: false,
+    winner: '',
+    racePath: Array(10).fill(0).map(() => Math.random() > 0.7 ? 1 : 0),
+    playerSpeed: 0,
+    maxSpeed: 5,
+    currentPathIndex: 0
+  });
+
   const mapContainerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<HTMLDivElement>(null);
 
@@ -126,25 +145,25 @@ const KeralaItinerary = () => {
 
   const centerMapOnPlayer = useCallback(() => {
     if (!mapContainerRef.current) return;
-    
+
     const containerWidth = mapContainerRef.current.clientWidth;
     const containerHeight = mapContainerRef.current.clientHeight;
-    
+
     const centerX = (containerWidth / 2 - playerPosition.x * mapScale);
     const centerY = (containerHeight / 2 - playerPosition.y * mapScale);
-    
+
     setMapPosition({ x: centerX, y: centerY });
   }, [playerPosition, mapScale]);
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (playingGame) return;
-      
+
       const moveStep = 16;
       let newDirection = playerDirection;
       let newX = playerPosition.x;
       let newY = playerPosition.y;
-      
+
       switch (e.key) {
         case "ArrowUp":
           newY -= moveStep;
@@ -163,43 +182,43 @@ const KeralaItinerary = () => {
           newDirection = Direction.RIGHT;
           break;
       }
-      
+
       if (newX < 0) newX = 0;
       if (newX > MAP_WIDTH) newX = MAP_WIDTH;
       if (newY < 0) newY = 0;
       if (newY > MAP_HEIGHT) newY = MAP_HEIGHT;
-      
+
       setPlayerDirection(newDirection);
       setPlayerPosition({ x: newX, y: newY });
-      
+
       checkLandmarksAndGames(newX, newY);
     };
 
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [playerPosition, playerDirection, playingGame]);
-  
+
   const checkLandmarksAndGames = (x: number, y: number) => {
-    const foundLandmark = landmarks.find(landmark => 
+    const foundLandmark = landmarks.find(landmark =>
       Math.abs(landmark.x - x) < 30 && Math.abs(landmark.y - y) < 30
     );
-    
+
     if (foundLandmark) {
       setActiveLandmark(foundLandmark);
       setActiveGame(null);
       return;
     }
-    
-    const foundGame = miniGames.find(game => 
+
+    const foundGame = miniGames.find(game =>
       Math.abs(game.x - x) < 30 && Math.abs(game.y - y) < 30
     );
-    
+
     if (foundGame) {
       setActiveGame(foundGame);
       setActiveLandmark(null);
       return;
     }
-    
+
     setActiveLandmark(null);
     setActiveGame(null);
   };
@@ -207,21 +226,21 @@ const KeralaItinerary = () => {
   const movePlayer = (dx: number, dy: number) => {
     const moveStep = 16;
     let newDirection = playerDirection;
-    
+
     if (dx > 0) newDirection = Direction.RIGHT;
     else if (dx < 0) newDirection = Direction.LEFT;
     else if (dy > 0) newDirection = Direction.DOWN;
     else if (dy < 0) newDirection = Direction.UP;
-    
+
     const newX = Math.max(0, Math.min(MAP_WIDTH, playerPosition.x + dx * moveStep));
     const newY = Math.max(0, Math.min(MAP_HEIGHT, playerPosition.y + dy * moveStep));
-    
+
     setPlayerDirection(newDirection);
     setPlayerPosition({ x: newX, y: newY });
-    
+
     checkLandmarksAndGames(newX, newY);
   };
-  
+
   const handleZoom = (event: React.WheelEvent) => {
     event.preventDefault();
     const zoomFactor = event.deltaY > 0 ? 0.9 : 1.1;
@@ -230,13 +249,13 @@ const KeralaItinerary = () => {
       return Math.max(0.5, Math.min(2.0, newScale));
     });
   };
-  
+
   const handleMapDragStart = (event: React.MouseEvent | React.TouchEvent) => {
     if (playingGame) return;
-    
+
     setIsDragging(true);
     let clientX, clientY;
-    
+
     if ('touches' in event) {
       clientX = event.touches[0].clientX;
       clientY = event.touches[0].clientY;
@@ -244,18 +263,18 @@ const KeralaItinerary = () => {
       clientX = event.clientX;
       clientY = event.clientY;
     }
-    
-    setDragStart({ 
-      x: clientX - mapPosition.x, 
-      y: clientY - mapPosition.y 
+
+    setDragStart({
+      x: clientX - mapPosition.x,
+      y: clientY - mapPosition.y
     });
   };
-  
+
   const handleMapDragMove = (event: React.MouseEvent | React.TouchEvent) => {
     if (!isDragging) return;
-    
+
     let clientX, clientY;
-    
+
     if ('touches' in event) {
       clientX = event.touches[0].clientX;
       clientY = event.touches[0].clientY;
@@ -263,33 +282,33 @@ const KeralaItinerary = () => {
       clientX = event.clientX;
       clientY = event.clientY;
     }
-    
+
     setMapPosition({
       x: clientX - dragStart.x,
       y: clientY - dragStart.y
     });
   };
-  
+
   const handleMapDragEnd = () => {
     setIsDragging(false);
   };
-  
+
   const navigateToLandmark = (landmark: typeof landmarks[0]) => {
     setPlayerPosition({
       x: landmark.x,
       y: landmark.y - 32
     });
-    
+
     if (mapContainerRef.current) {
       const containerWidth = mapContainerRef.current.clientWidth;
       const containerHeight = mapContainerRef.current.clientHeight;
-      
+
       setMapPosition({
         x: containerWidth / 2 - landmark.x * mapScale,
         y: containerHeight / 2 - landmark.y * mapScale
       });
     }
-    
+
     setActiveLandmark(landmark);
     setActiveGame(null);
   };
@@ -306,10 +325,98 @@ const KeralaItinerary = () => {
     toast.success("Game completed! Continue exploring");
   };
 
+  const startBoatRace = () => {
+    setBoatRaceState({
+      ...boatRaceState,
+      started: true,
+      playerPosition: 0,
+      aiPosition: 0,
+      countdown: 3,
+      finished: false,
+      winner: '',
+      racePath: Array(10).fill(0).map(() => Math.random() > 0.7 ? 1 : 0),
+      playerSpeed: 0,
+      maxSpeed: 5,
+      currentPathIndex: 0
+    });
+
+    const countdownInterval = setInterval(() => {
+      setBoatRaceState(prev => {
+        if (prev.countdown > 1) {
+          return { ...prev, countdown: prev.countdown - 1 };
+        } else {
+          clearInterval(countdownInterval);
+          const raceInterval = setInterval(() => {
+            setBoatRaceState(prev => {
+              const aiSpeed = Math.random() * 2 + 2;
+              const newAiPosition = prev.aiPosition + aiSpeed;
+
+              const newPlayerPosition = prev.playerPosition + prev.playerSpeed;
+
+              if (newPlayerPosition >= 100 || newAiPosition >= 100) {
+                clearInterval(raceInterval);
+                const winner = newPlayerPosition >= 100 ? 'player' : 'ai';
+
+                if (winner === 'player') {
+                  toast.success("You won the boat race!");
+                } else {
+                  toast.error("The opponent won this time. Try again!");
+                }
+
+                return {
+                  ...prev,
+                  playerPosition: Math.min(newPlayerPosition, 100),
+                  aiPosition: Math.min(newAiPosition, 100),
+                  finished: true,
+                  winner
+                };
+              }
+
+              const pathIndex = Math.floor(newPlayerPosition / 10);
+              const hitObstacle = pathIndex !== prev.currentPathIndex &&
+                                 pathIndex < prev.racePath.length &&
+                                 prev.racePath[pathIndex] === 1;
+
+              const updatedSpeed = hitObstacle ?
+                Math.max(0, prev.playerSpeed - 2) :
+                prev.playerSpeed;
+
+              return {
+                ...prev,
+                playerPosition: newPlayerPosition,
+                aiPosition: newAiPosition,
+                currentPathIndex: pathIndex,
+                playerSpeed: updatedSpeed
+              };
+            });
+          }, 100);
+
+          return { ...prev, countdown: 0 };
+        }
+      });
+    }, 1000);
+  };
+
+  const increaseBoatSpeed = () => {
+    setBoatRaceState(prev => ({
+      ...prev,
+      playerSpeed: Math.min(prev.maxSpeed, prev.playerSpeed + 0.5)
+    }));
+  };
+
+  const resetBoatRace = () => {
+    setPlayingGame(false);
+    setBoatRaceState(prev => ({
+      ...prev,
+      started: false,
+      finished: false
+    }));
+  };
+
   const renderControls = () => (
     <div className="absolute bottom-4 right-4 grid grid-cols-3 gap-2 w-36 h-36">
       <div className="col-start-2">
-        <Button 
+        <Button
           onClick={() => movePlayer(0, -1)}
           className="w-12 h-12 bg-slate-700/70 hover:bg-slate-600/70 rounded-full p-0"
           disabled={playingGame}
@@ -318,7 +425,7 @@ const KeralaItinerary = () => {
         </Button>
       </div>
       <div className="col-start-1 row-start-2">
-        <Button 
+        <Button
           onClick={() => movePlayer(-1, 0)}
           className="w-12 h-12 bg-slate-700/70 hover:bg-slate-600/70 rounded-full p-0"
           disabled={playingGame}
@@ -327,7 +434,7 @@ const KeralaItinerary = () => {
         </Button>
       </div>
       <div className="col-start-3 row-start-2">
-        <Button 
+        <Button
           onClick={() => movePlayer(1, 0)}
           className="w-12 h-12 bg-slate-700/70 hover:bg-slate-600/70 rounded-full p-0"
           disabled={playingGame}
@@ -336,7 +443,7 @@ const KeralaItinerary = () => {
         </Button>
       </div>
       <div className="col-start-2 row-start-3">
-        <Button 
+        <Button
           onClick={() => movePlayer(0, 1)}
           className="w-12 h-12 bg-slate-700/70 hover:bg-slate-600/70 rounded-full p-0"
           disabled={playingGame}
@@ -349,10 +456,12 @@ const KeralaItinerary = () => {
 
   const renderMiniGame = () => {
     if (!activeGame) return null;
-    
-    if (activeGame.id === 1) {
+
+    if (activeGame.id === 5) {
+      return renderBoatRace();
+    } else if (activeGame.id === 1) {
       return (
-        <motion.div 
+        <motion.div
           className="p-4 bg-slate-800 rounded-lg"
           initial={{ opacity: 0, scale: 0.9 }}
           animate={{ opacity: 1, scale: 1 }}
@@ -378,9 +487,9 @@ const KeralaItinerary = () => {
         </motion.div>
       );
     }
-    
+
     return (
-      <motion.div 
+      <motion.div
         className="p-4 bg-slate-800 rounded-lg"
         initial={{ opacity: 0, scale: 0.9 }}
         animate={{ opacity: 1, scale: 1 }}
@@ -394,6 +503,179 @@ const KeralaItinerary = () => {
     );
   };
 
+  const renderBoatRace = () => {
+    if (!activeGame || activeGame.id !== 5) return null;
+
+    return (
+      <motion.div
+        className="p-4 bg-slate-800 rounded-lg"
+        initial={{ opacity: 0, scale: 0.9 }}
+        animate={{ opacity: 1, scale: 1 }}
+        exit={{ opacity: 0, scale: 0.9 }}
+        transition={{ type: "spring", stiffness: 300, damping: 25 }}
+      >
+        <div className="flex justify-between items-center mb-4">
+          <h3 className="text-xl font-bold text-white">Kerala Boat Race</h3>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={resetBoatRace}
+            className="text-gray-400 hover:text-white"
+          >
+            Exit Race
+          </Button>
+        </div>
+
+        {!boatRaceState.started ? (
+          <div className="text-center">
+            <img
+              src="/lovable-uploads/ca2d6830-e22c-4607-b372-bf96d604334a.png"
+              alt="Boat Race"
+              className="w-full h-32 object-cover rounded-lg mb-4 opacity-70"
+            />
+            <p className="text-gray-300 mb-6">Race your traditional boat through the Kerala backwaters. Tap rapidly to increase speed and avoid obstacles!</p>
+            <Button onClick={startBoatRace} className="bg-teal-600 hover:bg-teal-700">
+              Start Race
+            </Button>
+          </div>
+        ) : boatRaceState.countdown > 0 ? (
+          <div className="flex flex-col items-center justify-center py-10">
+            <div className="text-5xl font-bold text-white mb-4">{boatRaceState.countdown}</div>
+            <p className="text-gray-300">Get ready to race!</p>
+          </div>
+        ) : (
+          <div>
+            <div className="relative h-20 bg-blue-900/50 rounded-lg mb-6 overflow-hidden">
+              <div className="absolute inset-0 flex">
+                {Array(20).fill(0).map((_, i) => (
+                  <motion.div
+                    key={i}
+                    className="h-1 bg-blue-400/20 rounded-full"
+                    style={{ width: `${100 / 20}%` }}
+                    animate={{ y: [0, 5, 0] }}
+                    transition={{
+                      repeat: Infinity,
+                      duration: 1.5,
+                      delay: i * 0.1 % 0.5
+                    }}
+                  />
+                ))}
+              </div>
+
+              <motion.div
+                className="absolute top-2 h-8 w-12 bg-yellow-500 rounded-sm"
+                style={{
+                  left: `${boatRaceState.playerPosition}%`,
+                  transform: `translateX(-50%)`
+                }}
+                animate={{
+                  y: [0, -2, 0],
+                  rotate: [0, 2, 0, -2, 0]
+                }}
+                transition={{
+                  repeat: Infinity,
+                  duration: 0.5
+                }}
+              >
+                <div className="absolute inset-0 flex items-center justify-center">
+                  <span className="text-xs font-bold">YOU</span>
+                </div>
+              </motion.div>
+
+              <motion.div
+                className="absolute bottom-2 h-8 w-12 bg-red-500 rounded-sm"
+                style={{
+                  left: `${boatRaceState.aiPosition}%`,
+                  transform: `translateX(-50%)`
+                }}
+                animate={{
+                  y: [0, -2, 0],
+                  rotate: [0, -2, 0, 2, 0]
+                }}
+                transition={{
+                  repeat: Infinity,
+                  duration: 0.5
+                }}
+              >
+                <div className="absolute inset-0 flex items-center justify-center">
+                  <span className="text-xs font-bold">CPU</span>
+                </div>
+              </motion.div>
+
+              <div
+                className="absolute top-0 bottom-0 right-0 w-1 bg-white"
+                style={{ boxShadow: '0 0 10px rgba(255,255,255,0.8)' }}
+              >
+                <Flag className="absolute -right-3 -top-2 h-5 w-5 text-white" />
+              </div>
+
+              {boatRaceState.racePath.map((isObstacle, index) => {
+                if (isObstacle) {
+                  return (
+                    <motion.div
+                      key={index}
+                      className="absolute top-1/2 transform -translate-y-1/2 h-4 w-4 bg-slate-700 rounded-full"
+                      style={{ left: `${(index + 1) * 10}%` }}
+                      animate={{ scale: [1, 1.2, 1] }}
+                      transition={{ repeat: Infinity, duration: 1 }}
+                    />
+                  );
+                }
+                return null;
+              })}
+            </div>
+
+            <div className="mb-6">
+              <div className="flex justify-between text-xs text-gray-400 mb-1">
+                <span>Speed</span>
+                <span>{Math.round(boatRaceState.playerSpeed * 20)} km/h</span>
+              </div>
+              <div className="w-full h-2 bg-slate-700 rounded-full overflow-hidden">
+                <div
+                  className="h-full bg-gradient-to-r from-green-500 to-teal-500 rounded-full"
+                  style={{ width: `${(boatRaceState.playerSpeed / boatRaceState.maxSpeed) * 100}%` }}
+                />
+              </div>
+            </div>
+
+            {boatRaceState.finished ? (
+              <div className="text-center">
+                <h4 className="text-xl font-bold mb-4">
+                  {boatRaceState.winner === 'player' ? (
+                    <span className="text-green-400">You Won!</span>
+                  ) : (
+                    <span className="text-red-400">You Lost!</span>
+                  )}
+                </h4>
+                <Button onClick={startBoatRace} className="bg-teal-600 hover:bg-teal-700 mr-2">
+                  Race Again
+                </Button>
+                <Button onClick={resetBoatRace} variant="outline">
+                  Exit
+                </Button>
+              </div>
+            ) : (
+              <div>
+                <p className="text-gray-300 text-sm mb-3 text-center">Tap repeatedly to paddle faster!</p>
+                <motion.div
+                  whileTap={{ scale: 0.95 }}
+                  className="w-full"
+                >
+                  <Button
+                    onClick={increaseBoatSpeed}
+                    className="bg-teal-600 hover:bg-teal-700 w-full h-16 text-lg font-bold"
+                  >
+                    PADDLE!
+                  </Button>
+                </motion.div>
+              </div>
+            )}
+          </div>
+        )}
+      </motion.div>
+    );
+  };
+
   return (
     <div className="bg-slate-900 p-4 rounded-lg w-full h-full overflow-hidden">
       <div className="flex items-center mb-4">
@@ -401,27 +683,27 @@ const KeralaItinerary = () => {
           <ArrowLeft className="h-5 w-5 text-white" />
         </Button>
         <h2 className="text-2xl font-bold text-white">Village Explorer</h2>
-        
+
         <div className="ml-auto flex gap-2">
-          <Button 
-            variant="outline" 
-            size="sm" 
+          <Button
+            variant="outline"
+            size="sm"
             onClick={() => setMapScale(prev => Math.max(0.5, prev - 0.1))}
             className="w-8 h-8 p-0 rounded-full"
           >
             -
           </Button>
-          <Button 
-            variant="outline" 
-            size="sm" 
+          <Button
+            variant="outline"
+            size="sm"
             onClick={() => setMapScale(prev => Math.min(2.0, prev + 0.1))}
             className="w-8 h-8 p-0 rounded-full"
           >
             +
           </Button>
-          <Button 
-            variant="outline" 
-            size="sm" 
+          <Button
+            variant="outline"
+            size="sm"
             onClick={centerMapOnPlayer}
             className="text-xs"
           >
@@ -429,9 +711,9 @@ const KeralaItinerary = () => {
           </Button>
         </div>
       </div>
-      
+
       {showInstructions && (
-        <motion.div 
+        <motion.div
           className="bg-slate-800/90 backdrop-blur-sm p-4 rounded-lg mb-4 text-white"
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -442,9 +724,9 @@ const KeralaItinerary = () => {
               <p className="text-sm text-gray-300 mb-2">Use arrow keys or on-screen controls to move your character.</p>
               <p className="text-sm text-gray-300">Visit landmarks and mini-games to discover village attractions.</p>
             </div>
-            <Button 
-              variant="ghost" 
-              size="sm" 
+            <Button
+              variant="ghost"
+              size="sm"
               onClick={() => setShowInstructions(false)}
               className="text-gray-400 hover:text-white"
             >
@@ -456,7 +738,7 @@ const KeralaItinerary = () => {
 
       <AnimatePresence mode="wait">
         {playingGame ? (
-          <motion.div 
+          <motion.div
             key="game-mode"
             className="mt-4"
             initial={{ opacity: 0, y: 20 }}
@@ -474,9 +756,9 @@ const KeralaItinerary = () => {
             exit={{ opacity: 0 }}
             className="relative"
           >
-            <div 
+            <div
               ref={mapContainerRef}
-              className="relative bg-green-800 rounded-lg overflow-hidden shadow-xl border border-teal-900/50 h-[60vh]" 
+              className="relative bg-green-800 rounded-lg overflow-hidden shadow-xl border border-teal-900/50 h-[60vh]"
               onWheel={handleZoom}
               onMouseDown={handleMapDragStart}
               onMouseMove={handleMapDragMove}
@@ -486,34 +768,34 @@ const KeralaItinerary = () => {
               onTouchMove={handleMapDragMove}
               onTouchEnd={handleMapDragEnd}
             >
-              <div 
+              <div
                 ref={mapRef}
                 className="absolute origin-top-left transition-transform duration-200"
-                style={{ 
+                style={{
                   transform: `scale(${mapScale})`,
                   left: `${mapPosition.x}px`,
                   top: `${mapPosition.y}px`,
                 }}
               >
                 <div className="relative">
-                  <img 
-                    src="/lovable-uploads/f55a5bc8-b4e5-446a-9803-84768ce13250.png" 
-                    alt="Village Map" 
+                  <img
+                    src="/lovable-uploads/f55a5bc8-b4e5-446a-9803-84768ce13250.png"
+                    alt="Village Map"
                     className="w-[1000px] h-[1000px] object-cover pixel-art"
                     style={{ imageRendering: 'pixelated' }}
                   />
-                  
+
                   {landmarks.map(landmark => (
                     <motion.div
                       key={`landmark-${landmark.id}`}
                       className="absolute cursor-pointer"
-                      style={{ 
-                        left: landmark.x - 12, 
+                      style={{
+                        left: landmark.x - 12,
                         top: landmark.y - 12,
                         zIndex: 10
                       }}
                       whileHover={{ scale: 1.2 }}
-                      animate={{ 
+                      animate={{
                         scale: [1, 1.1, 1],
                       }}
                       transition={{ repeat: Infinity, duration: 2 }}
@@ -527,18 +809,18 @@ const KeralaItinerary = () => {
                       </div>
                     </motion.div>
                   ))}
-                  
+
                   {miniGames.map(game => (
                     <motion.div
                       key={`game-${game.id}`}
                       className="absolute cursor-pointer"
-                      style={{ 
-                        left: game.x - 12, 
+                      style={{
+                        left: game.x - 12,
                         top: game.y - 12,
                         zIndex: 10
                       }}
                       whileHover={{ scale: 1.2 }}
-                      animate={{ 
+                      animate={{
                         rotate: [0, 10, -10, 0],
                       }}
                       transition={{ repeat: Infinity, duration: 3 }}
@@ -556,12 +838,12 @@ const KeralaItinerary = () => {
                       </div>
                     </motion.div>
                   ))}
-                  
-                  <motion.div 
+
+                  <motion.div
                     className="absolute z-20"
-                    style={{ 
-                      left: playerPosition.x - CHARACTER_SIZE/2, 
-                      top: playerPosition.y - CHARACTER_SIZE/2,
+                    style={{
+                      left: playerPosition.x - CHARACTER_SIZE / 2,
+                      top: playerPosition.y - CHARACTER_SIZE / 2,
                       width: CHARACTER_SIZE,
                       height: CHARACTER_SIZE
                     }}
@@ -569,9 +851,9 @@ const KeralaItinerary = () => {
                     animate={{ scale: 1 }}
                     transition={{ type: "spring", stiffness: 500, damping: 30 }}
                   >
-                    <motion.div 
-                      className="w-full h-full bg-yellow-500 rounded-sm relative overflow-hidden flex items.center justify-center pixelated"
-                      style={{ 
+                    <motion.div
+                      className="w-full h-full bg-yellow-500 rounded-sm relative overflow-hidden flex items-center justify-center pixelated"
+                      style={{
                         imageRendering: 'pixelated',
                         boxShadow: '0 3px 0 rgba(0,0,0,0.3)'
                       }}
@@ -582,15 +864,15 @@ const KeralaItinerary = () => {
                         <div className="w-full h-full relative">
                           <div className="absolute top-1/4 left-1/3 w-[4px] h-[4px] bg-black rounded-none" />
                           <div className="absolute top-1/4 right-1/3 w-[4px] h-[4px] bg-black rounded-none" />
-                          <div 
+                          <div
                             className="absolute top-1/2 left-1/4 w-[12px] h-[4px] bg-black rounded-none"
                             style={{
-                              transform: 
-                                playerDirection === Direction.UP ? 'translateY(-4px)' : 
-                                playerDirection === Direction.DOWN ? 'translateY(4px)' : 
-                                playerDirection === Direction.LEFT ? 'translateX(-4px) rotate(90deg)' : 
+                              transform:
+                                playerDirection === Direction.UP ? 'translateY(-4px)' :
+                                playerDirection === Direction.DOWN ? 'translateY(4px)' :
+                                playerDirection === Direction.LEFT ? 'translateX(-4px) rotate(90deg)' :
                                 'translateX(4px) rotate(90deg)'
-                            }} 
+                            }}
                           />
                         </div>
                       </div>
@@ -598,16 +880,16 @@ const KeralaItinerary = () => {
                   </motion.div>
                 </div>
               </div>
-              
+
               <div className="absolute inset-0 pointer-events-none bg-gradient-to-b from-transparent to-slate-900/30" />
             </div>
           </motion.div>
         )}
       </AnimatePresence>
-      
+
       <AnimatePresence>
         {activeLandmark && !playingGame && (
-          <motion.div 
+          <motion.div
             key={`landmark-${activeLandmark.id}`}
             className="mt-4 bg-slate-800/90 backdrop-blur-sm p-4 rounded-lg text-white"
             initial={{ opacity: 0, y: 20 }}
@@ -617,9 +899,9 @@ const KeralaItinerary = () => {
           >
             <div className="flex flex-col md:flex-row items-start gap-4">
               {activeLandmark.image && (
-                <motion.img 
-                  src={activeLandmark.image} 
-                  alt={activeLandmark.name} 
+                <motion.img
+                  src={activeLandmark.image}
+                  alt={activeLandmark.name}
                   className="w-full md:w-40 h-32 object-cover rounded-lg"
                   initial={{ scale: 0.95, opacity: 0.8 }}
                   animate={{ scale: 1, opacity: 1 }}
@@ -627,7 +909,7 @@ const KeralaItinerary = () => {
                 />
               )}
               <div>
-                <motion.h3 
+                <motion.h3
                   className="text-xl font-bold mb-1 flex items-center gap-2"
                   initial={{ x: -10, opacity: 0 }}
                   animate={{ x: 0, opacity: 1 }}
@@ -636,7 +918,7 @@ const KeralaItinerary = () => {
                   <MapPin className="h-5 w-5 text-red-500" />
                   {activeLandmark.name}
                 </motion.h3>
-                <motion.p 
+                <motion.p
                   className="text-gray-300"
                   initial={{ x: -10, opacity: 0 }}
                   animate={{ x: 0, opacity: 1 }}
@@ -649,10 +931,10 @@ const KeralaItinerary = () => {
           </motion.div>
         )}
       </AnimatePresence>
-      
+
       <AnimatePresence>
         {activeGame && !playingGame && (
-          <motion.div 
+          <motion.div
             key={`game-${activeGame.id}`}
             className="mt-4 bg-slate-800/90 backdrop-blur-sm p-4 rounded-lg text-white"
             initial={{ opacity: 0, y: 20 }}
@@ -661,7 +943,7 @@ const KeralaItinerary = () => {
             transition={{ type: "spring", stiffness: 300, damping: 30 }}
           >
             <div className="flex items-start gap-3">
-              <motion.div 
+              <motion.div
                 className="bg-purple-500 rounded-full w-10 h-10 flex items-center justify-center flex-shrink-0"
                 initial={{ rotate: -10, scale: 0.9 }}
                 animate={{ rotate: 0, scale: 1 }}
@@ -670,7 +952,7 @@ const KeralaItinerary = () => {
                 <Gamepad className="h-5 w-5 text-white" />
               </motion.div>
               <div>
-                <motion.h3 
+                <motion.h3
                   className="text-xl font-bold mb-1"
                   initial={{ y: -5, opacity: 0 }}
                   animate={{ y: 0, opacity: 1 }}
@@ -678,7 +960,7 @@ const KeralaItinerary = () => {
                 >
                   {activeGame.name}
                 </motion.h3>
-                <motion.p 
+                <motion.p
                   className="text-gray-300 mb-3"
                   initial={{ y: -5, opacity: 0 }}
                   animate={{ y: 0, opacity: 1 }}
@@ -702,9 +984,9 @@ const KeralaItinerary = () => {
           </motion.div>
         )}
       </AnimatePresence>
-      
+
       {!playingGame && (
-        <motion.div 
+        <motion.div
           className="mt-4 bg-slate-800/80 p-3 rounded-lg"
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
@@ -715,10 +997,10 @@ const KeralaItinerary = () => {
           </h3>
           <div className="flex flex-wrap gap-2">
             {landmarks.map(landmark => (
-              <Button 
-                key={landmark.id} 
-                size="sm" 
-                variant="outline" 
+              <Button
+                key={landmark.id}
+                size="sm"
+                variant="outline"
                 className="text-xs"
                 onClick={() => navigateToLandmark(landmark)}
               >
@@ -728,9 +1010,9 @@ const KeralaItinerary = () => {
           </div>
         </motion.div>
       )}
-      
+
       {!playingGame && renderControls()}
-      
+
       <style>{`
         .pixel-art {
           image-rendering: pixelated;

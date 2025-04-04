@@ -45,10 +45,10 @@ const CreateCharacter = () => {
   };
 
   const avatars = [
-    { id: "avatar-1", src: "/lovable-uploads/91bf8199-59a4-4e3e-96c1-10cd41b289f1.png" },
-    { id: "avatar-2", src: "/characters/explorer.png" },
-    { id: "avatar-3", src: "/characters/guide.png" },
-    { id: "avatar-4", src: "/characters/merchant.png" },
+    { id: "avatar-1", src: "https://i.pinimg.com/736x/4b/be/27/4bbe27b2b942334bf9e7a9b8211d1203.jpg" },
+    { id: "avatar-2", src: "https://i.pinimg.com/236x/aa/f8/cd/aaf8cdfc1ea85c8dc784a721a2c44870.jpg" },
+    { id: "avatar-3", src: "https://i.pinimg.com/236x/4f/34/fd/4f34fdc97fea28adfb30dc8121cbb04a.jpg" },
+    { id: "avatar-4", src: "https://i.pinimg.com/474x/65/d6/8d/65d68ddd72b556598282f058973e6cb0.jpg" },
   ];
 
   return (

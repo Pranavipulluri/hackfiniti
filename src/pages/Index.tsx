@@ -57,10 +57,10 @@ const Index = () => {
         </div>
       
         {/* Custom Character Images */}
-        <div className="absolute bottom-0 right-0 md:w-64 w-40 opacity-90 z-10 transform translate-y-1/4">
-          <img src="/lovable-uploads/d364c15d-f877-40f4-9df2-cad09b0ec8a2.png" alt="Kerala traditional boy character" className="w-full" />
-        </div>
         <div className="absolute bottom-0 left-0 md:w-64 w-40 opacity-90 z-10 transform translate-y-1/4">
+          <img src="https://cdn3d.iconscout.com/3d/premium/thumb/casual-female-hospitality-pose-3d-illustration-download-in-png-blend-fbx-gltf-file-formats--indian-girl-namaste-welcome-welcoming-pack-people-illustrations-4046991.png" alt="Kerala traditional boy character" className="w-full" />
+        </div>
+        <div className="absolute bottom-0 right-0 md:w-64 w-40 opacity-90 z-10 transform translate-y-1/4">
           <img src="/lovable-uploads/7ea599b5-bfde-462e-b7e7-454b0a50f062.png" alt="Tour guide character" className="w-full" />
         </div>
         
