@@ -140,7 +140,7 @@ const Scoreboard = () => {
                     <AvatarFallback>{item.username?.[0] || "U"}</AvatarFallback>
                   </Avatar>
                   <div className="flex-1">
-                    <p className="font-semibold">{item.username || "Adventurer"}</p>
+                    <p className="font-semibold text-black">{item.username || "Adventurer"}</p>
                     <div className="flex items-center mt-1">
                       <Badge variant="outline" className="text-teal-600 mr-2">
                         Level {item.level}

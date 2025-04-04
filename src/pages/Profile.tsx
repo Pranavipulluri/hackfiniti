@@ -115,7 +115,7 @@ const Profile = () => {
               {badges.map(badge => (
                 <div key={badge.id} className="flex items-center bg-white rounded-full px-3 py-1 shadow-sm border">
                   {badge.icon}
-                  <span className="ml-1 text-sm font-medium">{badge.name}</span>
+                  <span className="ml-1 text-sm font-medium text-black">{badge.name}</span>
                 </div>
               ))}
             </div>
@@ -272,7 +272,7 @@ const Profile = () => {
                       <div className="bg-teal-50 rounded-full p-4 mb-3">
                         {badge.icon}
                       </div>
-                      <span className="text-sm font-medium text-center">{badge.name}</span>
+                      <span className="text-sm font-medium text-center text-black">{badge.name}</span>
                     </div>
                   ))}
                 </div>
@@ -290,7 +290,7 @@ const Profile = () => {
                   {inventory.map(item => (
                     <div key={item.id} className="flex justify-between items-center p-3 bg-white rounded-lg border">
                       <div>
-                        <h3 className="font-medium">{item.name}</h3>
+                        <h3 className="text-xl text-black">{item.name}</h3>
                         <p className="text-sm text-gray-500">{item.type}</p>
                       </div>
                       <Badge 
